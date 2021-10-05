@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PuppetMaster
+namespace PuppetMasterCLI
 {
     class Program
     {
