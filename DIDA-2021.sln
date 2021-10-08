@@ -5,17 +5,30 @@ VisualStudioVersion = 16.0.31702.278
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PuppetMasterGUI", "PuppetMasterGUI\PuppetMasterGUI.csproj", "{2AD13C2A-0242-47AD-92F8-0582774DF743}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMasterCLI", "PuppetMasterCLI\PuppetMasterCLI.csproj", "{5A3F35D2-3CF1-42F9-B5F2-70F17954705B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PuppetMasterCLI", "PuppetMasterCLI\PuppetMasterCLI.csproj", "{5A3F35D2-3CF1-42F9-B5F2-70F17954705B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{8D7B1E00-61EC-4DA6-A128-637E5944BB3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCS", "PCS\PCS.csproj", "{8FB59FA0-4BDD-43ED-9F08-88831E3DAB40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PCS", "PCS\PCS.csproj", "{8FB59FA0-4BDD-43ED-9F08-88831E3DAB40}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Schedular", "Schedular\Schedular.csproj", "{80798F0B-2C5C-4384-802D-B3B949E3E63F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Schedular", "Schedular\Schedular.csproj", "{80798F0B-2C5C-4384-802D-B3B949E3E63F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerNode", "WorkerNode\WorkerNode.csproj", "{A7F24209-C89A-4649-BB3E-2F76023BA3B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerNode", "WorkerNode\WorkerNode.csproj", "{A7F24209-C89A-4649-BB3E-2F76023BA3B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageNode", "StorageNode\StorageNode.csproj", "{8C6CFD37-562F-48D7-8B66-E374B00E03AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageNode", "StorageNode\StorageNode.csproj", "{8C6CFD37-562F-48D7-8B66-E374B00E03AC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Protos", "Protos", "{ABC6A2DA-4854-48B7-BF55-730BF3FFE5DF}"
+	ProjectSection(SolutionItems) = preProject
+		PuppetMasterToPCS.proto = PuppetMasterToPCS.proto
+		PuppetMasterToSchedular.proto = PuppetMasterToSchedular.proto
+		PuppetMasterToStorageNode.proto = PuppetMasterToStorageNode.proto
+		PuppetMasterToWorkerNode.proto = PuppetMasterToWorkerNode.proto
+		SchedularToWorkerNode.proto = SchedularToWorkerNode.proto
+		StorageNodeToStorageNode.proto = StorageNodeToStorageNode.proto
+		WorkerNodeToPuppetMaster.proto = WorkerNodeToPuppetMaster.proto
+		WorkerNodeToStorageNode.proto = WorkerNodeToStorageNode.proto
+		WorkerNodeToWorkerNode.proto = WorkerNodeToWorkerNode.proto
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

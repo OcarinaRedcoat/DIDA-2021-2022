@@ -4,84 +4,86 @@ namespace PuppetMasterCLI
 {
     class Program
     {
+        static bool run = true;
+
         static void Main(string[] args)
         {
             Console.WriteLine("Initializing the PuppetMasterCLI");
-      
-            while (true) { 
-               
+            PuppetMaster pm = new PuppetMaster();
+            string line = "";
+
+            // If args -> ImportFile
+
+            // Init Log Server
+            LogServer ls = new LogServer();
+
+            while (run) {
+                line = Console.ReadLine();
+                ParseConfigScriptLine(pm, line);
             }
+
+            // Shutdown logServer
+            ls.ShutDown();
+
         }
         
-        static void ImportFile(string fileName)
+        static void ImportFile(PuppetMaster pm, string fileName)
         {
             // Input file name. Then each line is parsed according to the specs.
             string[] lines = System.IO.File.ReadAllLines(fileName);
-
-            // Display the file contents by using a foreach loop.
         
             foreach (string line in lines)
             {
                 // Use a tab to indent each line of the file.
-                ParseConfigScriptLine(line);
+                ParseConfigScriptLine(pm, line);
             }
 
         }
 
-        static void ParseConfigScriptLine(string scritpLine)
+        static void ParseConfigScriptLine(PuppetMaster pm, string scritpLine)
         {
-            stri
-            string[] configArgs = text.Split(' ');
-            string command = configArgs[0]
+            string[] configArgs = scritpLine.Split(' ');
+            string command = configArgs[0];
             switch (command)
             {
                 case "scheduler":
-                    CreateScheduler(configArgs[1], configArgs[2]);
+                    pm.CreateScheduler(configArgs[1], configArgs[2]);
                     break;
                 case "storage":
-                    CreateStorage(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
+                    pm.CreateStorage(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
                     break;
                 case "worker":
-                    CreateWorker(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
+                    pm.CreateWorker(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
                     break;
                 case "client":
-                    ClientRequest(configArgs[1]);
+                    pm.ClientRequest(configArgs[1]);
                     break;
                 case "populate":
-                    Populate(configArgs[1]);
+                    pm.Populate(configArgs[1]);
                     break;
                 case "status":
-                    Status();
+                    pm.Status();
                     break;
                 case "listServer":
-                    ListServer(configArgs[1]);
+                    pm.ListServer(configArgs[1]);
                     break;
                 case "listGlobal":
-                    ListGlobal();
+                    pm.ListGlobal();
                     break;
 
                 case "debug":
-                    Debug();
+                    pm.Debug();
                     break;
                 case "crash":
-                    Crash(configArgs[1]);
+                    pm.Crash(configArgs[1]);
                     break;
                 case "wait_interval":
-                    Wait(Int32.Parse(configArgs[1]));
+                    pm.Wait(Int32.Parse(configArgs[1]));
+                    break;
+                case "exit":
+                    run = false;
                     break;
             }
         }
-
-        static void CreateScheduler(string serverId, string url) { }
-        static void CreateStorage(string serverId, string url, int gossipDelay) { }
-        static void CreateWorker(string serverId, string url, int gossipDelay) { }
-        static void ClientRequest(string inputAppFileName) { }
-        static void Populate(string dataFileName) { }
-        static void Status() { }
-        static void ListServer(string serverId) { }
-        static void ListGlobal() { }
-        static void Debug() { }
-        static void Crash(string serverId) { }
-        static void Wait(int waitInterval) { }
     }
 }
