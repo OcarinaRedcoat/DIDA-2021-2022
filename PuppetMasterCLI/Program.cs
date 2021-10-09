@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace PuppetMasterCLI
 {
@@ -9,13 +10,13 @@ namespace PuppetMasterCLI
         static void Main(string[] args)
         {
             Console.WriteLine("Initializing the PuppetMasterCLI");
-            PuppetMaster pm = new PuppetMaster();
+            List<string> knownPCSs = new List<string>();
+            knownPCSs.Add("http://localhost:10000");
+
+            PuppetMaster pm = new PuppetMaster(knownPCSs);
             string line = "";
 
             // If args -> ImportFile
-
-            // Init Log Server
-            LogServer ls = new LogServer();
 
             while (run) {
                 line = Console.ReadLine();
@@ -23,7 +24,7 @@ namespace PuppetMasterCLI
             }
 
             // Shutdown logServer
-            ls.ShutDown();
+            pm.Exit();
 
         }
         

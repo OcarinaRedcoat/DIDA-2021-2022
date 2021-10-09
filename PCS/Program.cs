@@ -6,7 +6,10 @@ namespace PCS
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var server = new PCSServer();
+            Console.WriteLine("Hello World from PCS!");
+            Console.ReadLine();
+            server.ShutDown();
         }
     }
 }
