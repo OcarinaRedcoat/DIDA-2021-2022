@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Schedular
+namespace Scheduler
 {
     class Program
     {

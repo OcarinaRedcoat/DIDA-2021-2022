@@ -40,7 +40,7 @@ namespace PuppetMasterCLI
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
             startInfo.UseShellExecute = true;
-            startInfo.FileName = "C:\\Users\\Vasco Faria\\source\\repos\\DIDA-2021\\Schedular\\bin\\Debug\\netcoreapp3.1\\Schedular.exe";
+            startInfo.FileName = "C:\\Users\\Vasco Faria\\source\\repos\\DIDA-2021\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
             startInfo.Arguments = "";
 

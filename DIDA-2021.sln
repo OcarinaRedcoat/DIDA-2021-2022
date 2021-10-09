@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PuppetMasterCLI", "PuppetMa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PCS", "PCS\PCS.csproj", "{8FB59FA0-4BDD-43ED-9F08-88831E3DAB40}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Schedular", "Schedular\Schedular.csproj", "{80798F0B-2C5C-4384-802D-B3B949E3E63F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerNode", "WorkerNode\WorkerNode.csproj", "{A7F24209-C89A-4649-BB3E-2F76023BA3B6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageNode", "StorageNode\StorageNode.csproj", "{8C6CFD37-562F-48D7-8B66-E374B00E03AC}"
@@ -27,6 +25,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Protos", "Protos", "{ABC6A2
 		WorkerNodeToStorageNode.proto = WorkerNodeToStorageNode.proto
 		WorkerNodeToWorkerNode.proto = WorkerNodeToWorkerNode.proto
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scheduler", "Scheduler\Scheduler.csproj", "{7654F28C-08DA-448B-82BE-5B6B8961BC20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Operator", "Operator\Operator.csproj", "{2C5362C5-777A-429B-A975-FD454F3F1434}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,10 +48,6 @@ Global
 		{8FB59FA0-4BDD-43ED-9F08-88831E3DAB40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FB59FA0-4BDD-43ED-9F08-88831E3DAB40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FB59FA0-4BDD-43ED-9F08-88831E3DAB40}.Release|Any CPU.Build.0 = Release|Any CPU
-		{80798F0B-2C5C-4384-802D-B3B949E3E63F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{80798F0B-2C5C-4384-802D-B3B949E3E63F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{80798F0B-2C5C-4384-802D-B3B949E3E63F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{80798F0B-2C5C-4384-802D-B3B949E3E63F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A7F24209-C89A-4649-BB3E-2F76023BA3B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A7F24209-C89A-4649-BB3E-2F76023BA3B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7F24209-C89A-4649-BB3E-2F76023BA3B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -58,6 +56,14 @@ Global
 		{8C6CFD37-562F-48D7-8B66-E374B00E03AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C6CFD37-562F-48D7-8B66-E374B00E03AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C6CFD37-562F-48D7-8B66-E374B00E03AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7654F28C-08DA-448B-82BE-5B6B8961BC20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7654F28C-08DA-448B-82BE-5B6B8961BC20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7654F28C-08DA-448B-82BE-5B6B8961BC20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7654F28C-08DA-448B-82BE-5B6B8961BC20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C5362C5-777A-429B-A975-FD454F3F1434}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C5362C5-777A-429B-A975-FD454F3F1434}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C5362C5-777A-429B-A975-FD454F3F1434}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C5362C5-777A-429B-A975-FD454F3F1434}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

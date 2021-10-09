@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PuppetMaster
+namespace Operator
 {
     class Program
     {
