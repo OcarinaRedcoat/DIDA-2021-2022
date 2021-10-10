@@ -14,7 +14,7 @@ namespace PuppetMasterCLI
 
         private Dictionary<string, PCSManager> pcsManagers = new Dictionary<string, PCSManager>();
 
-        // List of Workers Nodes
+        // List of Workers Nodes  
         private List<string> workerNodes = new List<string>();
 
         // List of Storage Nodes
@@ -72,6 +72,8 @@ namespace PuppetMasterCLI
             // Go to the respective pcsManager
 
             // Ask to create a new Storage Node
+            var pcsHost = url.Split("//")[1].Split(":")[0];
+            pcsManagers[pcsHost].createStorageNode(serverId, url, gossipDelay);
 
         }
         public void CreateWorker(string serverId, string url, int gossipDelay)
@@ -85,8 +87,7 @@ namespace PuppetMasterCLI
             // Ask to create a new Worker Node
 
             var pcsHost = url.Split("//")[1].Split(":")[0];
-            Console.WriteLine(pcsHost);
-            pcsManagers[pcsHost].createWorkerNode();
+            pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay);
         }
         public void ClientRequest(string inputAppFileName)
         {

@@ -6,7 +6,9 @@ service PCSService {
 }
 
 message CreateWorkerNodeRequest {
-	string message = 1;
+	string serverId = 1;
+	string url = 2;
+	int32 gossipDelay = 3 ; // in milisseconds
 }
 
 message CreateWorkerNodeReply {
@@ -14,9 +16,12 @@ message CreateWorkerNodeReply {
 }
 
 message CreateStorageNodeRequest {
+	string serverId = 1;
+	string url = 2;
+	int32 gossipDelay = 3; // in milisseconds
 
 }
 
 message CreateStorageNodeReply {
-
+	bool okay = 1;
 }

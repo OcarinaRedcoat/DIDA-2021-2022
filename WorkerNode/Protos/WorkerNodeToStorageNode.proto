@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+service StorageService {
+	rpc Read(ReadRequest) returns (ReadReply) {}
+	rpc Write(WriteRequest) returns (WriteReply) {}
+	rpc UpdateIfValueIs(UpdateIfValueIsRequest) returns (UpdateIfValueIsReply) {}
+}
+
+message ReadRequest {
+	string id = 1;
+	DIDAVersion version = 2;
+}
+
+message ReadReply {
+	DIDARecord record = 1;
+}
+
+
+message WriteRequest {
+	string id = 1;
+	string val = 2;
+}
+
+message WriteReply {
+	DIDAVersion version = 1;
+}
+
+message UpdateIfValueIsRequest {
+	string id = 1;
+	string oldvalue = 2;
+	string newvalue = 3;
+}
+
+message UpdateIfValueIsReply {
+	DIDAVersion version = 1;
+}
+
+message DIDAVersion {
+	int versionNumber = 1;
+	int replicaId = 2;
+}
+
+message DIDARecord {
+	string id = 1;
+	DIDAVersion version = 2;
+	int replicaId = 3;
+}
+

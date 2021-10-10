@@ -43,6 +43,6 @@ namespace DIDAWorker {
 	public struct DIDAOperatorID {
 		public string classname;
 		public int order;
-}
+	}
 
 }

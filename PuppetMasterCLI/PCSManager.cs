@@ -21,7 +21,7 @@ namespace PuppetMasterCLI
             client = new PCSService.PCSServiceClient(channel);
         }
 
-        public void createWorkerNode() // return the Node
+        public void createWorkerNode(string serverId, string url, int gossipDelay) // return the Node
         {
             // GRPC call to PCS in order to create ...
             try
@@ -29,7 +29,9 @@ namespace PuppetMasterCLI
                 var reply = client.CreateWorkerNode(
                     new CreateWorkerNodeRequest
                     {
-                        Message = "Hello World"
+                        ServerId = serverId,
+                        Url = url,
+                        GossipDelay = gossipDelay
                     }
                 );
                 if (reply.Okay)
@@ -46,9 +48,32 @@ namespace PuppetMasterCLI
             }
         }
 
-        public void createStorageNode()
+        public void createStorageNode(string serverId, string url, int gossipDelay)
         {
             // GRPC call to PCS in order to create ...
+            try
+            {
+                var reply = client.CreateStorageNode(
+                    new CreateStorageNodeRequest
+                    {
+                        ServerId = serverId,
+                        Url = url,
+                        GossipDelay = gossipDelay
+                    }
+                );
+                if (reply.Okay)
+                {
+                    Console.WriteLine("Okay");
+                }
+                else
+                {
+                    Console.WriteLine("Not Okay");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

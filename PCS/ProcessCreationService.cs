@@ -11,7 +11,7 @@ namespace PCS
 
         public override Task<CreateWorkerNodeReply> CreateWorkerNode(CreateWorkerNodeRequest request, ServerCallContext context)
         {
-            PCSLogic.CreateWorkerNode(request.Message);
+            PCSLogic.CreateWorkerNode(request.ServerId, request.Url, request.GossipDelay);
             return Task.FromResult(new CreateWorkerNodeReply
             {
                 Okay = true
@@ -20,7 +20,11 @@ namespace PCS
 
         public override Task<CreateStorageNodeReply> CreateStorageNode(CreateStorageNodeRequest request, ServerCallContext context)
         {
-            return base.CreateStorageNode(request, context);
+            PCSLogic.CreateStorageNode(request.ServerId, request.Url, request.GossipDelay);
+            return Task.FromResult(new CreateStorageNodeReply
+            {
+                // Okay = true
+            });
         }
     }
 
@@ -45,6 +49,7 @@ namespace PCS
         public void ShutDown()
         {
             server.ShutdownAsync().Wait();
+            PCSLogic.WaitForProcesses();
         }
     }
 }
