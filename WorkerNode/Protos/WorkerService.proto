@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+service WorkerService {
+	rpc ProcessOperator(ProcessOperatorRequest) returns (ProcessOperatorReply) {}
+}
+
+message DIDAMetaRecord {
+	int32 id = 1;
+	// other metadata to be specified by the students
+}
+
+message DIDAOperator {
+	// ????
+}
+
+message DIDAAssignment {
+	DIDAOperator operator = 1;
+	string host = 2;
+	int32 port = 3;
+	string output = 4;
+}
+
+message ProcessOperatorRequest {
+	DIDAMetaRecord meta = 1;
+	string input = 2;
+	int32 next = 3;
+	int32 chainSize = 4;
+	repeated DIDAAssignment chain = 5;
+}
+
+message ProcessOperatorReply {
+	bool okay = 1;
+}
+

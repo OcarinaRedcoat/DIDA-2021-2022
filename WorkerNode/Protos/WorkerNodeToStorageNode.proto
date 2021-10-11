@@ -36,13 +36,13 @@ message UpdateIfValueIsReply {
 }
 
 message DIDAVersion {
-	int versionNumber = 1;
-	int replicaId = 2;
+	int32 versionNumber = 1;
+	int32 replicaId = 2;
 }
 
 message DIDARecord {
 	string id = 1;
 	DIDAVersion version = 2;
-	int replicaId = 3;
+	int32 replicaId = 3;
 }
 

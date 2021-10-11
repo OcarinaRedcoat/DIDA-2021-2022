@@ -9,9 +9,11 @@ namespace StorageNode
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World from Storage Node!");
-            StorageNode sn = new StorageNode();
-
+            var host = args[1].Split("//")[1].Split(":")[0];
+            var port = args[1].Split("//")[1].Split(":")[1];
+            StorageServer storageServer = new StorageServer(args[0], host, Int32.Parse(port));
             Console.ReadLine();
+            storageServer.ShutDown();
         }
     }
 }

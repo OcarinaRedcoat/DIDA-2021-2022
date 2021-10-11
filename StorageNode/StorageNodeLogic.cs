@@ -8,32 +8,67 @@ namespace StorageNode
 {
     class StorageNodeLogic : IDIDAStorage
     {
-        private ConcurrentDictionary<string, string> storage = new ConcurrentDictionary<string, string>();
+        // Must be a queue instead of a list, in order to pop old values
+        private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
+        private int replicaId = 1;
 
-        DIDAStorage.DIDARecord IDIDAStorage.Read(string id, DIDAStorage.DIDAVersion version)
+        public DIDAStorage.DIDARecord Read(string id, DIDAStorage.DIDAVersion version)
         {
-            throw new NotImplementedException();
-            /*string value;
-            storage.TryGetValue(id, out value);
-            return new DIDAStorage.DIDARecord
-            {
-                Id = "s1",
-                Version = new DIDAVersion
+            lock (this) {
+                List<DIDAStorage.DIDARecord> recordValues;
+                DIDAStorage.DIDARecord value;
+
+                if (storage.TryGetValue(id, out recordValues))
                 {
-                    VersionNumber = 1,
-                    ReplicaId = 2
-
-                },
-                Val = value
-            };*/
+                    /*
+                    foreach (DIDAStorage.DIDARecord rec in recordValues)
+                    {
+                        // Get the most recent or the indicated version
+                    }
+                    */
+                    value = recordValues[0];
+                    return value;
+                } else
+                {
+                    // No value in this record
+                }
+                throw new NotImplementedException();
+            }
         }
 
-        DIDAStorage.DIDAVersion IDIDAStorage.Write(string id, string val)
+        public DIDAStorage.DIDAVersion Write(string id, string val)
         {
-            throw new NotImplementedException();
+            DIDAStorage.DIDAVersion didaVersion;
+            lock (this)
+            {
+                // Get the greater version
+                didaVersion = new DIDAStorage.DIDAVersion
+                {
+                    replicaId = replicaId,
+                    versionNumber = 1
+                };
+
+                DIDAStorage.DIDARecord didaRecord = new DIDAStorage.DIDARecord
+                {
+                    id = id,
+                    version = didaVersion,
+                    val = val
+                };
+                if (storage.ContainsKey(id))
+                {
+                    var l = storage[id];
+                    l.Add(didaRecord);
+                } else
+                {
+                    storage.Add(id, new List<DIDAStorage.DIDARecord>());
+                    storage[id].Add(didaRecord);
+                }
+            };
+
+            return didaVersion;
         }
 
-        DIDAStorage.DIDAVersion IDIDAStorage.UpdateIfValueIs(string id, string oldvalue, string newvalue)
+        public DIDAStorage.DIDAVersion UpdateIfValueIs(string id, string oldvalue, string newvalue)
         {
             throw new NotImplementedException();
         }

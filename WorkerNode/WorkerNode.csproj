@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,9 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="Protos\WorkerNodeToStorageNode.proto">
-      <GrpcServices>Server</GrpcServices>
-    </None>
+    <PackageReference Include="Google.Protobuf" Version="3.13.0" />
+    <PackageReference Include="Grpc.Core" Version="2.32.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.32.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+	  <Protobuf Include="Protos\WorkerNodeToStorageNode.proto" GrpcServices="Client" />
+	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>
