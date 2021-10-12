@@ -13,12 +13,12 @@ namespace StorageNode
         public ReadReply ReadSerialize(string id, DIDAVersion grpcVersionInput)
         {
             // Serialize Input
-            var version = new DIDAStorage.DIDAVersion
+            DIDAStorage.DIDAVersion version = new DIDAStorage.DIDAVersion
             {
                 replicaId = grpcVersionInput.ReplicaId,
                 versionNumber = grpcVersionInput.VersionNumber
             };
-
+            
             // Call logic operation
             DIDAStorage.DIDARecord record = snl.Read(id, version);
 

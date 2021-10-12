@@ -8,7 +8,7 @@ service StorageService {
 
 message ReadRequest {
 	string id = 1;
-	optional DIDAVersion version = 2;
+	DIDAVersion version = 2;
 }
 
 message ReadReply {

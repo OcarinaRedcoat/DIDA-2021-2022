@@ -43,6 +43,6 @@ message DIDAVersion {
 message DIDARecord {
 	string id = 1;
 	DIDAVersion version = 2;
-	int32 replicaId = 3;
+	string val = 3;
 }
 

@@ -13,22 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerNode", "WorkerNode\Wo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageNode", "StorageNode\StorageNode.csproj", "{8C6CFD37-562F-48D7-8B66-E374B00E03AC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Protos", "Protos", "{ABC6A2DA-4854-48B7-BF55-730BF3FFE5DF}"
-	ProjectSection(SolutionItems) = preProject
-		PuppetMasterToPCS.proto = PuppetMasterToPCS.proto
-		PuppetMasterToSchedular.proto = PuppetMasterToSchedular.proto
-		PuppetMasterToStorageNode.proto = PuppetMasterToStorageNode.proto
-		PuppetMasterToWorkerNode.proto = PuppetMasterToWorkerNode.proto
-		SchedularToWorkerNode.proto = SchedularToWorkerNode.proto
-		StorageNodeToStorageNode.proto = StorageNodeToStorageNode.proto
-		WorkerNodeToPuppetMaster.proto = WorkerNodeToPuppetMaster.proto
-		WorkerNodeToStorageNode.proto = WorkerNodeToStorageNode.proto
-		WorkerNodeToWorkerNode.proto = WorkerNodeToWorkerNode.proto
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scheduler", "Scheduler\Scheduler.csproj", "{7654F28C-08DA-448B-82BE-5B6B8961BC20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scheduler", "Scheduler\Scheduler.csproj", "{7654F28C-08DA-448B-82BE-5B6B8961BC20}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Operator", "Operator\Operator.csproj", "{2C5362C5-777A-429B-A975-FD454F3F1434}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Operator", "Operator\Operator.csproj", "{2C5362C5-777A-429B-A975-FD454F3F1434}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

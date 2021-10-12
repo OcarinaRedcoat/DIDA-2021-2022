@@ -14,9 +14,12 @@ namespace StorageNode
 
         public DIDAStorage.DIDARecord Read(string id, DIDAStorage.DIDAVersion version)
         {
+            Console.WriteLine("Reading... " + id);
             lock (this) {
                 List<DIDAStorage.DIDARecord> recordValues;
                 DIDAStorage.DIDARecord value;
+
+                // Check if the version has -1 values
 
                 if (storage.TryGetValue(id, out recordValues))
                 {
@@ -39,6 +42,7 @@ namespace StorageNode
         public DIDAStorage.DIDAVersion Write(string id, string val)
         {
             DIDAStorage.DIDAVersion didaVersion;
+            Console.WriteLine("Writing... " + id + " - " + val);
             lock (this)
             {
                 // Get the greater version

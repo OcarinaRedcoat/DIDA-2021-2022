@@ -17,7 +17,13 @@ namespace WorkerNode
             StorageManager sm = new StorageManager("http://localhost:3000");
             sm.WriteToStorage("key", "value of key");
 
-            var reply = sm.ReadFromStorage("key", null); // Doesnt work for null...
+            DIDAWorker.DIDAVersion nullVersion = new DIDAWorker.DIDAVersion
+            {
+                replicaId = -1,
+                versionNumber = -1
+            };
+
+            var reply = sm.ReadFromStorage("key", nullVersion); // Doesnt work for null...
 
             Console.WriteLine(reply.val);
 

@@ -20,23 +20,16 @@ namespace WorkerNode
             client = new StorageService.StorageServiceClient(channel);
         }
 
-        public DIDAWorker.DIDARecord ReadFromStorage(string id, DIDAWorker.DIDAVersion? version)
+        public DIDAWorker.DIDARecord ReadFromStorage(string id, DIDAWorker.DIDAVersion version)
         {
             try
             {
                 DIDAVersion grpcVersionInput;
-                if (version != null)
+                grpcVersionInput = new DIDAVersion
                 {
-                    grpcVersionInput = new DIDAVersion
-                    {
-                        ReplicaId = ((DIDAWorker.DIDAVersion) version).replicaId,
-                        VersionNumber = ((DIDAWorker.DIDAVersion)version).versionNumber
-                    };
-                }
-                else
-                {
-                    grpcVersionInput = null;
-                }
+                    ReplicaId = version.replicaId,
+                    VersionNumber = version.versionNumber
+                };
 
                 var reply = client.Read(
                     new ReadRequest
@@ -56,7 +49,7 @@ namespace WorkerNode
                 {
                     id = reply.Record.Id,
                     version = newVersion,
-                    
+                    val = reply.Record.Val
                 };
                 return record;
             }
