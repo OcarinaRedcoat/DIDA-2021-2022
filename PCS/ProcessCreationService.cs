@@ -23,7 +23,7 @@ namespace PCS
             PCSLogic.CreateStorageNode(request.ServerId, request.Url, request.GossipDelay);
             return Task.FromResult(new CreateStorageNodeReply
             {
-                // Okay = true
+                Okay = true
             });
         }
     }
