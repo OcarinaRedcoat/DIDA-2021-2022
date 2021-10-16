@@ -12,12 +12,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Protos\WorkerService.proto">
-      <GrpcServices>Server Client</GrpcServices>
-    </None>
+	<Protobuf Include="Protos\WorkerService.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

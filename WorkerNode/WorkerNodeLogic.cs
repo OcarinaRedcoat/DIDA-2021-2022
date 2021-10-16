@@ -9,15 +9,19 @@ namespace WorkerNode
 {
     class WorkerNodeLogic
     {
-        internal void ProcessOperator(DIDARequest req)
+        public void ProcessOperator(DIDARequest req)
         {
-            string className = req.chain[req.chainSize].op.classname;
+            Console.WriteLine("Inside ProcessOperator: ");
 
             try
             {
+                string className = req.chain[req.next].op.classname;
+                Console.WriteLine("B " + className);
                 // ASync ??
                 DIDAWorker.IDIDAOperator _op = extractOperator(className);
+                Console.WriteLine("C");
                 _op.ConfigureStorage(new DIDAStorageNode[] { new DIDAStorageNode { host = "localhost", port = 3000, serverId = "s1" } }, MyLocationFunction);
+                Console.WriteLine("D");
                 string output = _op.ProcessRecord(req.meta, req.input);
 
                 Console.WriteLine("Finish: " + output);
@@ -40,26 +44,41 @@ namespace WorkerNode
 
         private DIDAWorker.IDIDAOperator extractOperator(string className)
         {
-            string _dllNameTermination = ".dll";
-            string _currWorkingDir = Directory.GetCurrentDirectory() + "..\\..\\..\\Operators";
-
-            foreach (string filename in Directory.EnumerateFiles(_currWorkingDir))
+            try
             {
-                Console.WriteLine("file in cwd: " + filename);
-                if (filename.EndsWith(_dllNameTermination))
+                Console.WriteLine("Z");
+                string _dllNameTermination = ".dll";
+                string _currWorkingDir = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\WorkerNode\\Operators";
+
+                Console.WriteLine("Current: ");
+                Console.WriteLine(_currWorkingDir);
+
+                foreach (string filename in Directory.EnumerateFiles(_currWorkingDir))
                 {
-                    Console.WriteLine("File is a dll...Let's look at it's contained types...");
-                    Assembly _dll = Assembly.LoadFrom(filename);
-                    Type[] _typeList = _dll.GetTypes();
-                    foreach (Type type in _typeList)
+                    Console.WriteLine("file in cwd: " + filename);
+                    if (filename.EndsWith(_dllNameTermination))
                     {
-                        Console.WriteLine("type contained in dll: " + type.Name);
-                        if (type.Name == className)
+                        Console.WriteLine("File is a dll...Let's look at it's contained types...");
+                        Assembly _dll = Assembly.LoadFrom(filename);
+                        Console.WriteLine("After Assembly");
+                        Type[] _typeList = _dll.GetTypes();
+                        Console.WriteLine("After GetTypes ");
+                        Console.WriteLine(_typeList.Length);
+                        foreach (Type type in _typeList)
                         {
-                            return (DIDAWorker.IDIDAOperator)Activator.CreateInstance(type);
+                            Console.WriteLine("type contained in dll: " + type.Name);
+                            if (type.Name == className)
+                            {
+                                return (DIDAWorker.IDIDAOperator)Activator.CreateInstance(type);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Message: ", e);
+                throw e;
             }
             throw new Exception("Type not found!");
         }

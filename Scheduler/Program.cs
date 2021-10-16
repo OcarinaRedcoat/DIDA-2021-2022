@@ -8,8 +8,9 @@ namespace Scheduler
         {
             Console.WriteLine("Hello World from Schedular!");
 
-
-
+            WorkerManager wm = new WorkerManager("http://localhost:3001");
+            Console.WriteLine("Calling: wm.ProcessOperator");
+            wm.ProcessOperator();
 
             Console.ReadLine();
         }

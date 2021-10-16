@@ -18,7 +18,7 @@ namespace Operator
             // var value = this.storageReplicas[0].
             // increment
             // UPDATE the value to storage
-            throw new NotImplementedException();
+            return "ola";
         }
     }
 }

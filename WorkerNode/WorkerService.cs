@@ -50,6 +50,8 @@ namespace WorkerNode
                 chain = chain
             };
 
+
+            Console.WriteLine("Calling ProcessOperator Logic: ", req);
             // Call logic operation
             wnl.ProcessOperator(req);
 
@@ -62,6 +64,7 @@ namespace WorkerNode
 
         public override Task<ProcessOperatorReply> ProcessOperator(ProcessOperatorRequest request, ServerCallContext context)
         {
+            Console.WriteLine("Before goes to the Process Operator Logic");
             return Task.FromResult(ProcessOperatorSerialize(request.Meta, request.Input, request.Next, request.ChainSize, request.Chain));
         }
     }

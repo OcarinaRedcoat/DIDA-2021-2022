@@ -17,14 +17,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
-
 	  <Protobuf Include="Protos\WorkerNodeToStorageNode.proto" GrpcServices="Client" />
-	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Server Client" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Operators\" />
+	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Client" />
+	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Server" />
+	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>
