@@ -16,9 +16,18 @@ namespace PuppetMasterCLI
             PuppetMaster pm = new PuppetMaster(knownPCSs);
             string line = "";
 
+            Console.WriteLine("Do you want to load a Config File [y/n]");
+            var loadFileBool = Console.ReadLine();
+
             // If args -> ImportFile
+            if (loadFileBool == "y"){
+                var configFile = Console.ReadLine();
+                Console.WriteLine("Config File: " + configFile);
+                ImportFile(pm, configFile);
+            }
 
             while (run) {
+                Console.WriteLine("Write the name of the config file");
                 line = Console.ReadLine();
                 ParseConfigScriptLine(pm, line);
             }
@@ -35,6 +44,7 @@ namespace PuppetMasterCLI
         
             foreach (string line in lines)
             {
+                Console.WriteLine("Line: " + line);
                 // Use a tab to indent each line of the file.
                 ParseConfigScriptLine(pm, line);
             }
@@ -43,7 +53,9 @@ namespace PuppetMasterCLI
 
         static void ParseConfigScriptLine(PuppetMaster pm, string scritpLine)
         {
+            Console.WriteLine("Script Line: " + scritpLine);
             string[] configArgs = scritpLine.Split(' ');
+            Console.WriteLine("configArgs[0]: " + configArgs[0] +" configArgs[1]: " + configArgs[1] +" configArgs[2]: " + configArgs[2] +" configArgs[3]: " + configArgs[3]);
             string command = configArgs[0];
             switch (command)
             {

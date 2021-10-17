@@ -15,7 +15,7 @@ namespace PCS
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
             startInfo.UseShellExecute = true;
-            startInfo.FileName = "C:\\Users\\Vasco Faria\\source\\repos\\DIDA-2021\\WorkerNode\\bin\\Debug\\netcoreapp3.1\\WorkerNode.exe";
+            startInfo.FileName = "C:\\Users\\Caetano\\source\\repos\\DIDA-2021\\WorkerNode\\bin\\Debug\\netcoreapp3.1\\WorkerNode.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
             startInfo.Arguments = serverId + " " + url + " " + gossipDelay;
 
@@ -34,7 +34,7 @@ namespace PCS
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
             startInfo.UseShellExecute = true;
-            startInfo.FileName = "C:\\Users\\Vasco Faria\\source\\repos\\DIDA-2021\\StorageNode\\bin\\Debug\\netcoreapp3.1\\StorageNode.exe";
+            startInfo.FileName = "C:\\Users\\Caetano\\source\\repos\\DIDA-2021\\StorageNode\\bin\\Debug\\netcoreapp3.1\\StorageNode.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
             startInfo.Arguments = serverId + " " + url + " " + gossipDelay;
 
@@ -47,16 +47,6 @@ namespace PCS
                 Console.WriteLine(e.Message);
             }
         }
-
-        public static void WaitForProcesses()
-        {
-            lock (processes)
-            {
-                foreach (KeyValuePair<string, Process> k in processes)
-                {
-                    k.Value.WaitForExit();
-                }
-            }
-        }
+ public static void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
     }
 }

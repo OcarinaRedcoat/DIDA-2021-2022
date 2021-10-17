@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PuppetMasterCLI": {
+      "commandName": "Project",
+      "commandLineArgs": "pmscript1"
+    }
+  }
+}
