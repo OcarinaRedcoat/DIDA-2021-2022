@@ -18,4 +18,10 @@
     </PackageReference>
 	<Protobuf Include="Protos\WorkerNodeToStorageNode.proto" GrpcServices="Client" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="LibDIDAWorker">
+      <HintPath>..\Libs\LibDIDAWorker.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

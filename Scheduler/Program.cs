@@ -10,8 +10,10 @@ namespace Scheduler
 
             WorkerManager wm = new WorkerManager("http://localhost:3001");
             Console.WriteLine("Calling: wm.ProcessOperator");
+            
             wm.ProcessOperator();
 
+            Console.WriteLine();
             Console.ReadLine();
         }
     }

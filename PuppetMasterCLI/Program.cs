@@ -21,13 +21,14 @@ namespace PuppetMasterCLI
 
             // If args -> ImportFile
             if (loadFileBool == "y"){
+                Console.WriteLine("Write the name of the config file");
                 var configFile = Console.ReadLine();
                 Console.WriteLine("Config File: " + configFile);
                 ImportFile(pm, configFile);
             }
 
             while (run) {
-                Console.WriteLine("Write the name of the config file");
+                Console.WriteLine("Write command line");
                 line = Console.ReadLine();
                 ParseConfigScriptLine(pm, line);
             }
@@ -55,7 +56,6 @@ namespace PuppetMasterCLI
         {
             Console.WriteLine("Script Line: " + scritpLine);
             string[] configArgs = scritpLine.Split(' ');
-            Console.WriteLine("configArgs[0]: " + configArgs[0] +" configArgs[1]: " + configArgs[1] +" configArgs[2]: " + configArgs[2] +" configArgs[3]: " + configArgs[3]);
             string command = configArgs[0];
             switch (command)
             {

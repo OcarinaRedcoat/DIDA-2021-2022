@@ -63,6 +63,7 @@ namespace WorkerNode
                         Console.WriteLine("After Assembly");
                         Type[] _typeList = _dll.GetTypes();
                         Console.WriteLine("After GetTypes ");
+                        Console.WriteLine("After GetTypes ");
                         Console.WriteLine(_typeList.Length);
                         foreach (Type type in _typeList)
                         {

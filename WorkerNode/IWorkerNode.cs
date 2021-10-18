@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace DIDAWorker {
-
+	/*
 	public enum OperationType { ReadOp, WriteOp, UpdateIfOp};
 
 	public delegate DIDAStorageNode delLocateStorageId(string id, OperationType type);
@@ -44,7 +44,7 @@ namespace DIDAWorker {
 		public string classname;
 		public int order;
 	}
-
+	*/
 	public struct DIDARecord
 	{
 		public string id;
@@ -57,5 +57,5 @@ namespace DIDAWorker {
 		public int versionNumber;
 		public int replicaId;
 	}
-
+	
 }

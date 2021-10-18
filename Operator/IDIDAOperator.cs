@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
+/*
 namespace Operator
 {
 	public enum OperationType { ReadOp, WriteOp, UpdateIfOp };
@@ -53,3 +53,4 @@ namespace Operator
 			public int order;
 		}
 }
+*/

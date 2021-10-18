@@ -17,6 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scheduler", "Scheduler\Sche
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Operator", "Operator\Operator.csproj", "{2C5362C5-777A-429B-A975-FD454F3F1434}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{BF36833A-76EB-4AB2-A461-642825731BFE}"
+	ProjectSection(SolutionItems) = preProject
+		Libs\LibDIDAWorker.dll = Libs\LibDIDAWorker.dll
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

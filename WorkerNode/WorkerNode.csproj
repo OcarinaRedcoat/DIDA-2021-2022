@@ -23,4 +23,10 @@
 	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="LibDIDAWorker">
+      <HintPath>..\Libs\LibDIDAWorker.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
