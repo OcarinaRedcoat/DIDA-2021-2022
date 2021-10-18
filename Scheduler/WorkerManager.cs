@@ -1,22 +1,26 @@
 ﻿using Google.Protobuf.Collections;
+using Grpc.Core;
 using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Scheduler
 {
     class WorkerManager
     {
         // TODO: Implements IDIDAStorage????
-        private string url;
+
         private WorkerService.WorkerServiceClient client;
-        public WorkerManager(string url)
+        private Dictionary<string, Hosts> workersHosts = new Dictionary<string, Hosts>();
+        private Dictionary<string, GrpcChannel> workersChannels = new Dictionary<string, GrpcChannel>();
+        private Dictionary<string, WorkerService.WorkerServiceClient> workersClients = new Dictionary<string, WorkerService.WorkerServiceClient>();
+        public WorkerManager()
         {
-            this.url = url;
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            GrpcChannel channel = GrpcChannel.ForAddress(url);
-            client = new WorkerService.WorkerServiceClient(channel);
+            //GrpcChannel channel = GrpcChannel.ForAddress(url);
+            //client = new WorkerService.WorkerServiceClient(channel);
         }
 
         public void ProcessOperator()
@@ -51,10 +55,20 @@ namespace Scheduler
                     Output = ""
                 });
 
-                Console.WriteLine("Before calling ProcessOperator" + req);
+                Console.WriteLine("Before the try - calling ProcessOperator" + req);
+                try
+                {
+                    Console.WriteLine("Before the grpc call");
+                    ProcessOperatorReply reply = workersClients["w1"].ProcessOperator(req);
+                    Console.WriteLine("After the grpc call");
+                    Console.WriteLine("Response: " + reply.Okay);
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e);
+                }
 
-                ProcessOperatorReply reply = client.ProcessOperator(req);
-                Console.WriteLine("Response: " + reply.Okay);
+
 
             }
             catch (Exception e)
@@ -63,5 +77,35 @@ namespace Scheduler
                 throw e;
             }
         }
+
+        public void AddWorker(string workerId, string workerURL)
+        {
+
+            Hosts hosts = parseUrl(workerURL);
+            workersHosts.Add(workerId, hosts);
+            Console.WriteLine("Added WorkerId: " + workerId + " Host: " + hosts.host + " Port: " + hosts.port);
+
+            GrpcChannel channelAux = GrpcChannel.ForAddress(workerURL);
+            var clientAux = new WorkerService.WorkerServiceClient(channelAux);
+            workersChannels.Add(workerId, channelAux);
+            workersClients.Add(workerId, clientAux);
+
+        }
+
+        public Hosts parseUrl(string url)
+        {
+            Hosts result;
+            result.host = url.Split("//")[1].Split(":")[0];
+            result.port = Int32.Parse(url.Split("//")[1].Split(":")[1]);
+            return result;
+        }
+
     }
+
+    public struct Hosts
+    {
+        public string host;
+        public int port;
+    }
+
 }
