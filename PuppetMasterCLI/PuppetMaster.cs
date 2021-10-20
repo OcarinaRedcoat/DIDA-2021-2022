@@ -140,36 +140,43 @@ namespace PuppetMasterCLI
 
             // Make a DumpRequest
             DumpRequest req = new DumpRequest { };
-            DumpReply reply = storageNodes[0].client.Dump(req);
-            
-            Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
-            foreach (DIDARecord record in reply.Data)
+            foreach (StorageNodeStruct node in storageNodes)
             {
-                if (data.ContainsKey(record.Id))
+                if (node.serverId.Equals(serverId))
                 {
-                    // Check if the list already has the version
-                    data[record.Id].Add(record);
-                }
-                else
-                {
-                    data.TryAdd(record.Id, new List<DIDARecord>());
+                    DumpReply reply = node.client.Dump(req);
+
+                    Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
+                    foreach (DIDARecord record in reply.Data)
+                    {
+                        if (data.ContainsKey(record.Id))
+                        {
+                            // Check if the list already has the version
+                            data[record.Id].Add(record);
+                        }
+                        else
+                        {
+                            if (data.TryAdd(record.Id, new List<DIDARecord>()))
+                                data[record.Id].Add(record);
+                        }
+                    }
+
+                    // Print the results like:
+                    // key    |   versions (versionNumber, ReplicaId, valueX)
+                    // money  |   (1, 1, 1000) (2, 1, 2000)
+                    String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                    foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
+                    {
+                        res += pair.Key + " : ";
+                        foreach (DIDARecord record in pair.Value)
+                        {
+                            res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
+                        }
+                    }
+                    Console.WriteLine(res);
+                    return;
                 }
             }
-
-            // Print the results like:
-            // key    |   versions (versionNumber, ReplicaId, valueX)
-            // money  |   (1, 1, 1000) (2, 1, 2000)
-            String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
-            foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
-            {
-                res += pair.Key + " : ";
-                foreach (DIDARecord record in pair.Value)
-                {
-                    res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
-                }
-            }
-
-            Console.WriteLine(res);
         }
         public void ListGlobal()
         {
@@ -209,7 +216,6 @@ namespace PuppetMasterCLI
                         res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
                     }
                 }
-
                 Console.WriteLine(res);
             }
         }
