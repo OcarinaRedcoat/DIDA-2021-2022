@@ -13,9 +13,11 @@ namespace Scheduler
         // TODO: Implements IDIDAStorage????
 
         private WorkerService.WorkerServiceClient client;
+
         private Dictionary<string, Hosts> workersHosts = new Dictionary<string, Hosts>();
         private Dictionary<string, GrpcChannel> workersChannels = new Dictionary<string, GrpcChannel>();
         private Dictionary<string, WorkerService.WorkerServiceClient> workersClients = new Dictionary<string, WorkerService.WorkerServiceClient>();
+
         public WorkerManager()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -59,6 +61,9 @@ namespace Scheduler
                 try
                 {
                     Console.WriteLine("Before the grpc call");
+                    
+
+
                     ProcessOperatorReply reply = workersClients["w1"].ProcessOperator(req);
                     Console.WriteLine("After the grpc call");
                     Console.WriteLine("Response: " + reply.Okay);
@@ -106,6 +111,11 @@ namespace Scheduler
     {
         public string host;
         public int port;
+    }
+    public struct Balancer
+    {
+        public string workerId;
+        public int nTask;
     }
 
 }

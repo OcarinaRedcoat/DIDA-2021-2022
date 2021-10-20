@@ -15,7 +15,7 @@ namespace Scheduler
             Console.WriteLine(request.ServerId + " " + request.Url);
             wm.AddWorker(request.ServerId, request.Url);
             Console.WriteLine("Before ProcessOperator");
-            //wm.ProcessOperator();
+            wm.ProcessOperator();
 
             return Task.FromResult(new AddWorkerNodeReply
             {

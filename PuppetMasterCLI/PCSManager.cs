@@ -14,8 +14,8 @@ namespace PuppetMasterCLI
         private SchedulerService.SchedulerServiceClient schClient;
 
         private PCSService.PCSServiceClient client; // Sao varios PCS no final
-        private Dictionary<string, GrpcChannel> pcsChannels = new Dictionary<string, GrpcChannel>(); //TODO
-        private Dictionary<string, PCSService.PCSServiceClient> pcsClients = new Dictionary<string, PCSService.PCSServiceClient>(); //TODO
+//        private Dictionary<string, GrpcChannel> pcsChannels = new Dictionary<string, GrpcChannel>(); //TODO
+//        private Dictionary<string, PCSService.PCSServiceClient> pcsClients = new Dictionary<string, PCSService.PCSServiceClient>(); //TODO
 
         public PCSManager(string url)
         {
@@ -23,6 +23,7 @@ namespace PuppetMasterCLI
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             GrpcChannel channel = GrpcChannel.ForAddress(url);
             client = new PCSService.PCSServiceClient(channel);
+
 
             GrpcChannel channelScheduler = GrpcChannel.ForAddress("http://localhost:4000");
             schClient = new SchedulerService.SchedulerServiceClient(channelScheduler);

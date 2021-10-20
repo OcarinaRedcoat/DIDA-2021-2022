@@ -15,8 +15,15 @@
     </PackageReference>
 	<Protobuf Include="Protos\PuppetMasterToPCS.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\PuppetMasterToSchedular.proto" GrpcServices="Client" />
+	<Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
 	
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="LibDIDAStorage">
+      <HintPath>..\Libs\LibDIDAStorage.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

@@ -8,7 +8,12 @@ namespace StorageNode
 {
     class StorageNodeService : StorageService.StorageServiceBase
     {
-        StorageNodeLogic snl = new StorageNodeLogic();
+        StorageNodeLogic snl;
+
+        public StorageNodeService(ref StorageNodeLogic logic) : base()
+        {
+            this.snl = logic;
+        }
 
         public ReadReply ReadSerialize(string id, DIDAVersion grpcVersionInput)
         {
@@ -44,6 +49,7 @@ namespace StorageNode
         {
             return Task.FromResult(ReadSerialize(request.Id, request.Version));
         }
+
 
         public WriteReply WriteSerialize(string id, string value)
         {
@@ -84,7 +90,7 @@ namespace StorageNode
         private string serverId;
         Server server;
 
-        public StorageServer(string serverId, string host, int port)
+        public StorageServer(string serverId, string host, int port, ref StorageNodeLogic logic)
         {
             this.serverId = serverId;
             this.host = host;
@@ -92,7 +98,7 @@ namespace StorageNode
 
             server = new Server
             {
-                Services = { StorageService.BindService(new StorageNodeService()) },
+                Services = { StorageService.BindService(new StorageNodeService(ref logic)) },
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 

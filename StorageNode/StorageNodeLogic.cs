@@ -1,4 +1,6 @@
 ﻿using DIDAStorage;
+using Google.Protobuf.Collections;
+using Grpc.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -39,6 +41,11 @@ namespace StorageNode
             }
         }
 
+        public DIDAStorage.DIDAVersion UpdateIfValueIs(string id, string oldvalue, string newvalue)
+        {
+            throw new NotImplementedException();
+        }
+
         public DIDAStorage.DIDAVersion Write(string id, string val)
         {
             DIDAStorage.DIDAVersion didaVersion;
@@ -72,9 +79,15 @@ namespace StorageNode
             return didaVersion;
         }
 
-        public DIDAStorage.DIDAVersion UpdateIfValueIs(string id, string oldvalue, string newvalue)
+        public PopulateReply PopulateSerialize(RepeatedField<KeyValuePair> keyValuePairs)
         {
-            throw new NotImplementedException();
+            
+            
+
+
+            return new PopulateReply { Okay = true };
         }
+
+        public bool Populate() { return true; }
     }
 }
