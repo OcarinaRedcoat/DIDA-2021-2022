@@ -1,2 +1,22 @@
 syntax = "proto3";
 
+service DatabaseService { // In order to populate and dump data to a Storage Node
+	rpc Dump(DumpRequest) returns (DumpReply) {}
+}
+
+message DIDAVersion {
+	int32 versionNumber = 1;
+	int32 replicaId = 2;
+}
+
+message DIDARecord {
+	string id = 1;
+	DIDAVersion version = 2;
+	string val = 3;
+}
+
+message DumpRequest {}
+
+message DumpReply {
+	repeated DIDARecord data = 1;
+}

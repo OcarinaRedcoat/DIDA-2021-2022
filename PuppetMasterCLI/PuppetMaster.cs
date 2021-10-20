@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Grpc.Net.Client;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -107,10 +108,92 @@ namespace PuppetMasterCLI
         public void ListServer(string serverId)
         {
             // Lists all objects stored on the server identified by server id
+
+            // Get the client from StorageNode Clients List by its serverId
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:3000");
+            var client = new DatabaseService.DatabaseServiceClient(channel);
+
+            // Make a DumpRequest
+            DumpRequest req = new DumpRequest { };
+            DumpReply reply = client.Dump(req);
+            
+            Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
+            foreach (DIDARecord record in reply.Data)
+            {
+                if (data.ContainsKey(record.Id))
+                {
+                    // Check if the list already has the version
+                    data[record.Id].Add(record);
+                }
+                else
+                {
+                    data.TryAdd(record.Id, new List<DIDARecord>());
+                }
+            }
+
+            // Print the results like:
+            // key    |   versions (versionNumber, ReplicaId, valueX)
+            // money  |   (1, 1, 1000) (2, 1, 2000)
+            String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+            foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
+            {
+                res += pair.Key + " : ";
+                foreach (DIDARecord record in pair.Value)
+                {
+                    res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
+                }
+            }
+
+            Console.WriteLine(res);
         }
         public void ListGlobal()
         {
             // Lists all objects stored on the system
+
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:3000");
+            var mockClient = new DatabaseService.DatabaseServiceClient(channel);
+
+            List<DatabaseService.DatabaseServiceClient> clients = new List<DatabaseService.DatabaseServiceClient>();
+            clients.Add(mockClient);
+
+            // For each StorageNode Client
+            foreach (DatabaseService.DatabaseServiceClient client in clients)
+            {
+                // Make a DumpRequest
+                DumpRequest req = new DumpRequest { };
+                DumpReply reply = client.Dump(req);
+
+                Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
+                foreach (DIDARecord record in reply.Data)
+                {
+                    if (data.ContainsKey(record.Id))
+                    {
+                        // Check if the list already has the version
+                        data[record.Id].Add(record);
+                    }
+                    else
+                    {
+                        data.TryAdd(record.Id, new List<DIDARecord>());
+                    }
+                }
+
+                // Print the results like:
+                // key    |   versions (versionNumber, ReplicaId, valueX)
+                // money  |   (1, 1, 1000) (2, 1, 2000)
+                String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
+                {
+                    res += pair.Key + " : ";
+                    foreach (DIDARecord record in pair.Value)
+                    {
+                        res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
+                    }
+                }
+
+                Console.WriteLine(res);
+            }
         }
         public void Debug()
         {
