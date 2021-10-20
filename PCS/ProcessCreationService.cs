@@ -26,6 +26,15 @@ namespace PCS
                 Okay = true
             });
         }
+
+        public override Task<NukeReply> NukeStorage(NukeRequest request, ServerCallContext context)
+        {
+            PCSLogic.NukeStorage(request.ServerId);
+            return Task.FromResult(new NukeReply
+            {
+                Okay = true
+            });
+        }
     }
 
 
@@ -52,4 +61,5 @@ namespace PCS
             PCSLogic.WaitForProcesses();
         }
     }
+
 }

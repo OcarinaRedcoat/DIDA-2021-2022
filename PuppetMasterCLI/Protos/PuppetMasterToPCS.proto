@@ -3,6 +3,7 @@ syntax = "proto3";
 service PCSService {
 	rpc CreateWorkerNode(CreateWorkerNodeRequest) returns (CreateWorkerNodeReply) {}
 	rpc CreateStorageNode(CreateStorageNodeRequest) returns (CreateStorageNodeReply) {}
+	rpc NukeStorage(NukeRequest) returns (NukeReply) {}
 }
 
 message CreateWorkerNodeRequest {
@@ -23,5 +24,13 @@ message CreateStorageNodeRequest {
 }
 
 message CreateStorageNodeReply {
+	bool okay = 1;
+}
+
+message NukeRequest{
+	string serverId = 1;
+}
+
+message NukeReply{
 	bool okay = 1;
 }

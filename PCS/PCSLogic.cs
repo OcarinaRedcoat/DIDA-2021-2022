@@ -48,6 +48,13 @@ namespace PCS
                 Console.WriteLine(e.Message);
             }
         }
- public static void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
+
+        public static void NukeStorage(string serverId)
+        {
+            Process storageProcess = processes[serverId];
+            storageProcess.Kill();
+        }
+
+        public static void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
     }
 }

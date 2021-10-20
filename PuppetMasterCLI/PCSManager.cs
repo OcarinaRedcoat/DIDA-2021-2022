@@ -104,5 +104,23 @@ namespace PuppetMasterCLI
                 Console.WriteLine(e.Message);
             }
         }
+
+        public void Crash(string serverId)
+        {
+            var reply = client.NukeStorage(
+                new NukeRequest
+                {
+                    ServerId = serverId
+                }
+                );
+            if (reply.Okay)
+            {
+                Console.WriteLine("Nuked Storage: " + serverId);
+            }
+            else
+            {
+                Console.WriteLine("Not Nuked Storage: " + serverId);
+            }
+        }
     }
 }

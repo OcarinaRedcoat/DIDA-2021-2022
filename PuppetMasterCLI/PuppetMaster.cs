@@ -226,6 +226,20 @@ namespace PuppetMasterCLI
         public void Crash(string serverId)
         {
             // Force a storage process to terminate
+
+            string pcsHost;
+            foreach(StorageNodeStruct node in storageNodes)
+            {
+                if (node.serverId == serverId)
+                {
+                    string storageUrl = node.url;
+                    pcsHost = storageUrl.Split("//")[1].Split(":")[0];
+                    var pcs = pcsManagers[pcsHost];
+                    pcs.Crash(serverId);
+                    return;
+                }
+            }
+
         }
         public void Wait(int waitInterval)
         {
