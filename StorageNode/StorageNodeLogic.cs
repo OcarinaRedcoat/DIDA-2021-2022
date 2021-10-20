@@ -81,13 +81,29 @@ namespace StorageNode
 
         public PopulateReply PopulateSerialize(RepeatedField<KeyValuePair> keyValuePairs)
         {
-            
+            foreach (KeyValuePair pair in keyValuePairs)
+            {
+                DIDAStorage.DIDAVersion version;
+                version.replicaId = replicaId;
+                version.versionNumber = 1;
+
+                DIDAStorage.DIDARecord record;
+                record.id = pair.Key;
+                record.val = pair.Value;
+                record.version = version;
+
+                List<DIDAStorage.DIDARecord> listRecords = new List<DIDAStorage.DIDARecord>();
+                listRecords.Add(record);
+                storage.Add(pair.Key, listRecords);
+
+                Console.WriteLine("Stored!! Key: " + pair.Key + " Value: " + storage[pair.Key][0].val + " Id: " + storage[pair.Key][0].id + " Version Number: " + storage[pair.Key][0].version.versionNumber + " Replica Id: " + storage[pair.Key][0].version.replicaId);
+            }
             
 
 
             return new PopulateReply { Okay = true };
         }
 
-        public bool Populate() { return true; }
+        public PopulateReply Populate(RepeatedField<KeyValuePair> keyValuePairs) { return PopulateSerialize(keyValuePairs); }
     }
 }

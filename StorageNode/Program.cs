@@ -13,8 +13,10 @@ namespace StorageNode
             var port = args[1].Split("//")[1].Split(":")[1];
             var storageLogic = new StorageNodeLogic();
             StorageServer storageServer = new StorageServer(args[0], host, Int32.Parse(port), ref storageLogic);
+
             Console.ReadLine();
             storageServer.ShutDown();
+
         }
     }
 }

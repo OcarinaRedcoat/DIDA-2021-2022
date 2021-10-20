@@ -115,7 +115,8 @@ namespace PuppetMasterCLI
 
                 request.Data.Add(valuePair);
             }
-            var url = storageNodes[1].url;
+            
+            var url = storageNodes[0].url;
 
             GrpcChannel channel = GrpcChannel.ForAddress(url);
             var client = new PMStorageService.PMStorageServiceClient(channel);

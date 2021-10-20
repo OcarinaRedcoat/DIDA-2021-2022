@@ -83,6 +83,26 @@ namespace StorageNode
         }
     }
 
+    class PuppetMasterStorageService : PMStorageService.PMStorageServiceBase
+    {
+
+        private StorageNodeLogic storageNode;
+
+        public PuppetMasterStorageService(ref StorageNodeLogic logic) : base()
+        {
+            this.storageNode = logic;
+
+        }
+
+
+
+        public override Task<PopulateReply> Populate(PopulateRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(storageNode.Populate(request.Data));
+        }
+    }
+
+
     class StorageServer
     {
         private int port;
@@ -98,7 +118,7 @@ namespace StorageNode
 
             server = new Server
             {
-                Services = { StorageService.BindService(new StorageNodeService(ref logic)) },
+                Services = { StorageService.BindService(new StorageNodeService(ref logic)), PMStorageService.BindService(new PuppetMasterStorageService(ref logic)) } ,
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 
