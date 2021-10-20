@@ -4,6 +4,7 @@ service PCSService {
 	rpc CreateWorkerNode(CreateWorkerNodeRequest) returns (CreateWorkerNodeReply) {}
 	rpc CreateStorageNode(CreateStorageNodeRequest) returns (CreateStorageNodeReply) {}
 	rpc NukeStorage(NukeRequest) returns (NukeReply) {}
+	rpc Nuke(NukeAllRequest) returns (NukeAllReply) {}
 }
 
 message CreateWorkerNodeRequest {
@@ -34,3 +35,7 @@ message NukeRequest{
 message NukeReply{
 	bool okay = 1;
 }
+
+message NukeAllRequest{}
+
+message NukeAllReply{}

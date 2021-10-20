@@ -35,6 +35,12 @@ namespace PCS
                 Okay = true
             });
         }
+
+        public override Task<NukeAllReply> Nuke(NukeAllRequest request, ServerCallContext context)
+        {
+            PCSLogic.Nuke();
+            return Task.FromResult(new NukeAllReply{});
+        }
     }
 
 

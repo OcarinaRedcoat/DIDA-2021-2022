@@ -122,5 +122,10 @@ namespace PuppetMasterCLI
                 Console.WriteLine("Not Nuked Storage: " + serverId);
             }
         }
+
+        public void exit()
+        {
+            client.Nuke(new NukeAllRequest{});
+        }
     }
 }

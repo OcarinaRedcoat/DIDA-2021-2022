@@ -55,6 +55,15 @@ namespace PCS
             storageProcess.Kill();
         }
 
+        public static void Nuke()
+        {
+            foreach (KeyValuePair<string, Process> proc in processes)
+            {
+                proc.Value.Kill();   
+            }
+        }
+
+
         public static void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
     }
 }

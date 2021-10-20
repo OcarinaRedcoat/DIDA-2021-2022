@@ -248,9 +248,15 @@ namespace PuppetMasterCLI
 
         public void Exit()
         {
+            foreach (KeyValuePair<string, PCSManager> pcs in pcsManagers)
+            {
+                pcs.Value.exit();
+            }
+            schedulerProcess.Kill();
             WaitForSchedulerProcess();
             ls.ShutDown();
         }
+
     }
 
     public struct StorageNodeStruct
