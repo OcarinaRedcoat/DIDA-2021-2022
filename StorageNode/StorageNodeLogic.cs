@@ -98,12 +98,24 @@ namespace StorageNode
 
                 Console.WriteLine("Stored!! Key: " + pair.Key + " Value: " + storage[pair.Key][0].val + " Id: " + storage[pair.Key][0].id + " Version Number: " + storage[pair.Key][0].version.versionNumber + " Replica Id: " + storage[pair.Key][0].version.replicaId);
             }
-            
-
 
             return new PopulateReply { Okay = true };
         }
 
         public PopulateReply Populate(RepeatedField<KeyValuePair> keyValuePairs) { return PopulateSerialize(keyValuePairs); }
+
+        public List<DIDAStorage.DIDARecord> Dump()
+        {
+            List<DIDAStorage.DIDARecord> data = new List<DIDAStorage.DIDARecord>();
+            foreach (string key in storage.Keys)
+            {
+                var records = storage[key];
+                foreach (DIDAStorage.DIDARecord record in records)
+                {
+                    data.Add(record);
+                }
+            }
+            return data;
+        }
     }
 }

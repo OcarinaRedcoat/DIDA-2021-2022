@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using Google.Protobuf.Collections;
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -93,8 +94,38 @@ namespace StorageNode
             this.storageNode = logic;
 
         }
+        public DumpReply DumpSerialize()
+        {
+            // Call logic operation
+            var data = storageNode.Dump();
 
+            // Serialize Output
+            RepeatedField<DIDARecord> grpcData = new RepeatedField<DIDARecord>();
+            foreach (DIDAStorage.DIDARecord rec in data)
+            {
+                var grpcVersion = new DIDAVersion
+                {
+                    VersionNumber = rec.version.versionNumber,
+                    ReplicaId = rec.version.replicaId
+                };
+                grpcData.Add(new DIDARecord
+                {
+                    Id = rec.id,
+                    Version = grpcVersion,
+                    Val = rec.Val
+                });
+            }
 
+            return new DumpReply
+            {
+                Data = grpcData
+            };
+        }
+
+        public override Task<DumpReply> Dump(DumpRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(DumpSerialize());
+        }
 
         public override Task<PopulateReply> Populate(PopulateRequest request, ServerCallContext context)
         {
