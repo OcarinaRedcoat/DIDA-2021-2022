@@ -13,10 +13,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-	<Protobuf Include="Protos\StorageNodeToStorageNode.proto" GrpcServices="Client" />
-	  <Protobuf Include="Protos\StorageNodeToStorageNode.proto" GrpcServices="Server" />
-	<Protobuf Include="Protos\WorkerNodeToStorageNode.proto" GrpcServices="Server" />
-	<Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Server" />
+	    <Protobuf Include="Protos\Struct.proto" />
+	    <Protobuf Include="Protos\StorageNodeToStorageNode.proto" GrpcServices="Client" />
+	    <Protobuf Include="Protos\StorageNodeToStorageNode.proto" GrpcServices="Server" />
+	    <Protobuf Include="Protos\WorkerNodeToStorageNode.proto" GrpcServices="Server"  ProtoRoot="Protos\"/>
+	    <Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Server"  ProtoRoot="Protos\"/>
 	
   </ItemGroup>
 </Project>

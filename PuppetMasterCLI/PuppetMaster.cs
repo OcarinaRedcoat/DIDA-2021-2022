@@ -75,6 +75,9 @@ namespace PuppetMasterCLI
             StorageNodeStruct node;
             node.serverId = serverId;
             node.url = url;
+            node.channel = GrpcChannel.ForAddress(url);
+            node.client = new PMStorageService.PMStorageServiceClient(node.channel);
+
             storageNodes.Add(node);
 
         }
@@ -115,13 +118,8 @@ namespace PuppetMasterCLI
 
                 request.Data.Add(valuePair);
             }
-            
-            var url = storageNodes[0].url;
 
-            GrpcChannel channel = GrpcChannel.ForAddress(url);
-            var client = new PMStorageService.PMStorageServiceClient(channel);
-
-            client.Populate(request);
+            storageNodes[0].client.Populate(request);
 
 
         }
@@ -140,14 +138,9 @@ namespace PuppetMasterCLI
         {
             // Lists all objects stored on the server identified by server id
 
-            // Get the client from StorageNode Clients List by its serverId
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:3000");
-            var client = new DatabaseService.DatabaseServiceClient(channel);
-
             // Make a DumpRequest
             DumpRequest req = new DumpRequest { };
-            DumpReply reply = client.Dump(req);
+            DumpReply reply = storageNodes[0].client.Dump(req);
             
             Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
             foreach (DIDARecord record in reply.Data)
@@ -182,19 +175,12 @@ namespace PuppetMasterCLI
         {
             // Lists all objects stored on the system
 
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:3000");
-            var mockClient = new DatabaseService.DatabaseServiceClient(channel);
-
-            List<DatabaseService.DatabaseServiceClient> clients = new List<DatabaseService.DatabaseServiceClient>();
-            clients.Add(mockClient);
-
             // For each StorageNode Client
-            foreach (DatabaseService.DatabaseServiceClient client in clients)
+            foreach (StorageNodeStruct node in storageNodes)
             {
                 // Make a DumpRequest
                 DumpRequest req = new DumpRequest { };
-                DumpReply reply = client.Dump(req);
+                DumpReply reply = node.client.Dump(req);
 
                 Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
                 foreach (DIDARecord record in reply.Data)
@@ -206,7 +192,8 @@ namespace PuppetMasterCLI
                     }
                     else
                     {
-                        data.TryAdd(record.Id, new List<DIDARecord>());
+                        if (data.TryAdd(record.Id, new List<DIDARecord>()))
+                            data[record.Id].Add(record); 
                     }
                 }
 
@@ -250,5 +237,7 @@ namespace PuppetMasterCLI
     {
         public string serverId;
         public string url;
+        public GrpcChannel channel;
+        public PMStorageService.PMStorageServiceClient client;
     }
 }

@@ -22,7 +22,9 @@ namespace StorageNode
             DIDAStorage.DIDAVersion version = new DIDAStorage.DIDAVersion
             {
                 replicaId = grpcVersionInput.ReplicaId,
-                versionNumber = grpcVersionInput.VersionNumber
+
+                //replicaId = grpcVersionInput.ReplicaId,
+                //versionNumber = grpcVersionInput.VersionNumber
             };
             
             // Call logic operation
@@ -60,6 +62,7 @@ namespace StorageNode
             DIDAStorage.DIDAVersion version = snl.Write(id, value);
 
             // Serialize Output
+
             DIDAVersion grpcVersionOutput = new DIDAVersion
             {
                 ReplicaId = version.replicaId,
@@ -100,7 +103,8 @@ namespace StorageNode
             var data = storageNode.Dump();
 
             // Serialize Output
-            RepeatedField<DIDARecord> grpcData = new RepeatedField<DIDARecord>();
+            DumpReply reply = new DumpReply { };
+
             foreach (DIDAStorage.DIDARecord rec in data)
             {
                 var grpcVersion = new DIDAVersion
@@ -108,18 +112,17 @@ namespace StorageNode
                     VersionNumber = rec.version.versionNumber,
                     ReplicaId = rec.version.replicaId
                 };
-                grpcData.Add(new DIDARecord
+                reply.Data.Add(new DIDARecord
                 {
                     Id = rec.id,
                     Version = grpcVersion,
-                    Val = rec.Val
+                    Val = rec.val
                 });
             }
 
-            return new DumpReply
-            {
-                Data = grpcData
-            };
+
+
+            return reply;
         }
 
         public override Task<DumpReply> Dump(DumpRequest request, ServerCallContext context)
