@@ -28,6 +28,7 @@ namespace PuppetMasterCLI
         private SchedulerService.SchedulerServiceClient schedulerServiceClient;
         private GrpcChannel schedulerChannel;
 
+        private int replicaIdCounter;
         public PuppetMaster(List<string> pcsList)
         {
             foreach (string pcsURL in pcsList)

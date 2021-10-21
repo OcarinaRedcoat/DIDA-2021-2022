@@ -88,6 +88,8 @@ namespace Scheduler
         {
             IList<DIDAAssignment> assignment = LoadBalancer(operators);
 
+            Console.WriteLine("Chain Size: " + chainSize);
+
             // DIDARequest
             ProcessOperatorRequest request = new ProcessOperatorRequest
             {
@@ -100,6 +102,7 @@ namespace Scheduler
                 ChainSize = chainSize
             };
             request.Chain.Add(assignment);
+            Console.WriteLine("Chain: " + request.Chain);
 
 
             // Send DIDARequest to first worker 
@@ -119,6 +122,8 @@ namespace Scheduler
 
         private IList<DIDAAssignment> LoadBalancer(IList<DIDAOperatorID> operators)
         {
+
+            Console.WriteLine("Entrou no LoadBalancer");
             //FIXME dumb algo just a circle
             IList<DIDAAssignment> assignment = new List<DIDAAssignment>();
 

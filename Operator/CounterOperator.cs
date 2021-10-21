@@ -13,13 +13,23 @@ namespace Operator
             this.storageReplicas = storageReplicas;
         }
 
-        string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input)
+        string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
         {
             // READ the value from storage node
             // var value = this.storageReplicas[0].
             // increment
             // UPDATE the value to storage
-            return "ola";
+            int intInput;
+            if (previousOperatorOutput.Length == 0)
+                intInput = Int32.Parse(input);
+            else
+                intInput = Int32.Parse(previousOperatorOutput);
+
+            int intOutput = ++intInput;
+            
+            string output = intOutput.ToString();
+
+            return output;
         }
     }
 }

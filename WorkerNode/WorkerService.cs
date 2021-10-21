@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.Collections;
 using Grpc.Core;
 using System;
+using Grpc.Net.Client;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -53,7 +54,31 @@ namespace WorkerNode
 
             Console.WriteLine("Calling ProcessOperator Logic: ", req);
             // Call logic operation
-            wnl.ProcessOperator(req);
+
+            req.chain[req.next].output = wnl.ProcessOperator(req);
+
+            req.next++;
+
+            Console.WriteLine("Next: " + req.next);
+            foreach (DIDAWorker.DIDAAssignment ch in req.chain)
+            {
+                Console.WriteLine("Chain Host: " + ch.host + " Port: " + ch.port + " Operator: " + ch.op.classname + " Output: " + ch.output);
+            }
+
+            if (req.next < req.chainSize)
+            {
+                string url = "http://" +  req.chain[req.next].host + ":" + req.chain[req.next].port;
+                Console.WriteLine("URL Next: " + url);
+                GrpcChannel channelAux = GrpcChannel.ForAddress(url);
+                Console.WriteLine("A");
+                var client = new WorkerService.WorkerServiceClient(channelAux);
+                Console.WriteLine("B");
+                Console.WriteLine(client.ToString());
+                ProcessOperatorRequest newReq = GenerateRequest(req);
+                Console.WriteLine("C");
+                Console.WriteLine(req.ToString());
+                client.ProcessOperatorAsync(newReq); //ASYNC
+            }
 
             // Serialize Output
             return new ProcessOperatorReply
@@ -62,9 +87,43 @@ namespace WorkerNode
             };
         }
 
+        public ProcessOperatorRequest GenerateRequest(DIDAWorker.DIDARequest req)
+        {
+            DIDAMetaRecord metaRecord = new DIDAMetaRecord
+            {
+                Id = req.meta.id
+            };
+
+            ProcessOperatorRequest newReq = new ProcessOperatorRequest
+            {
+                Meta = metaRecord,
+                Input = req.input,
+                Next = req.next,
+                ChainSize = req.chainSize
+            };
+
+            foreach(DIDAWorker.DIDAAssignment assignment in req.chain)
+            {
+                DIDAOperatorID grpcOpId = new DIDAOperatorID
+                {
+                    Classname = assignment.op.classname,
+                    Order = assignment.op.order
+                };
+                DIDAAssignment grpcAssignment = new DIDAAssignment
+                {
+                    OperatorId = grpcOpId,
+                    Host = assignment.host,
+                    Port = assignment.port,
+                    Output = assignment.output
+                };
+                newReq.Chain.Add(grpcAssignment);
+            }
+
+            return newReq;
+        }
+
         public override Task<ProcessOperatorReply> ProcessOperator(ProcessOperatorRequest request, ServerCallContext context)
         {
-            Console.WriteLine("Before goes to the Process Operator Logic");
             return Task.FromResult(ProcessOperatorSerialize(request.Meta, request.Input, request.Next, request.ChainSize, request.Chain));
         }
     }

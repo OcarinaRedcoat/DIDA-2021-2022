@@ -1,4 +1,5 @@
 ﻿using DIDAWorker;
+using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,9 +10,9 @@ namespace WorkerNode
 {
     class WorkerNodeLogic
     {
-        public void ProcessOperator(DIDARequest req)
+        public string ProcessOperator(DIDARequest req)
         {
-
+            string output = "";
             try
             {
                 string className = req.chain[req.next].op.classname;
@@ -21,19 +22,30 @@ namespace WorkerNode
 
                 _op.ConfigureStorage(new DIDAStorageNode[] { new DIDAStorageNode { host = "localhost", port = 3000, serverId = "s1" } }, MyLocationFunction);
 
-                string output = _op.ProcessRecord(req.meta, req.input);
+                Console.WriteLine("Input: " + req.input);
+
+                if (req.next == 0) {
+                    Console.WriteLine("AAAAAA");
+                    output = _op.ProcessRecord(req.meta, req.input, "");
+                }
+
+                else {
+
+                    Console.WriteLine("BBBBB");
+                    output = _op.ProcessRecord(req.meta, req.input, req.chain[req.next - 1].output);
+                }
+
 
                 Console.WriteLine("Finish: " + output);
 
-                int next = ++req.next;
 
-                // TODO: Send to next Node
             }
             catch (Exception e)
             {
                 Console.WriteLine("Exception: ", e);
                 // TODO: handle this case, warn PuppetMaster
             }
+            return output;
         }
 
         private static DIDAStorageNode MyLocationFunction(string id, OperationType type)
