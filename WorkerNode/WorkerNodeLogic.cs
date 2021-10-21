@@ -41,13 +41,10 @@ namespace WorkerNode
                 Console.WriteLine("Input: " + req.input);
 
                 if (req.next == 0) {
-                    Console.WriteLine("AAAAAA");
                     output = _op.ProcessRecord(req.meta, req.input, "");
                 }
 
                 else {
-
-                    Console.WriteLine("BBBBB");
                     output = _op.ProcessRecord(req.meta, req.input, req.chain[req.next - 1].output);
 
                     if (debugMode)

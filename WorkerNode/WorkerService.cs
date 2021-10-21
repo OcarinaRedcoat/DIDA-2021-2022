@@ -92,6 +92,14 @@ namespace WorkerNode
             };
         }
 
+        class WorkerStatusService : StatusService.StatusServiceBase
+        {
+            public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+            {
+                return base.Status(request, context);
+            }
+        }
+
         public ProcessOperatorRequest GenerateRequest(DIDAWorker.DIDARequest req)
         {
             DIDAMetaRecord metaRecord = new DIDAMetaRecord
