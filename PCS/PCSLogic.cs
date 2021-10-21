@@ -30,14 +30,14 @@ namespace PCS
             }
         }
 
-        public static void CreateStorageNode(string serverId, string url, int gossipDelay)
+        public static void CreateStorageNode(string serverId, string url, int gossipDelay, int replicaId)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
             startInfo.UseShellExecute = true;
             startInfo.FileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\StorageNode\\bin\\Debug\\netcoreapp3.1\\StorageNode.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
-            startInfo.Arguments = serverId + " " + url + " " + gossipDelay;
+            startInfo.Arguments = serverId + " " + url + " " + gossipDelay + " " + replicaId;
 
             try
             {

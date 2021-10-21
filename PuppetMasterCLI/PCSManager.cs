@@ -77,7 +77,7 @@ namespace PuppetMasterCLI
             }
         }
 
-        public void createStorageNode(string serverId, string url, int gossipDelay)
+        public void createStorageNode(string serverId, string url, int gossipDelay, int replicaId)
         {
             // GRPC call to PCS in order to create ...
             try
@@ -87,7 +87,8 @@ namespace PuppetMasterCLI
                     {
                         ServerId = serverId,
                         Url = url,
-                        GossipDelay = gossipDelay
+                        GossipDelay = gossipDelay,
+                        ReplicaId = replicaId
                     }
                 );
                 if (reply.Okay)

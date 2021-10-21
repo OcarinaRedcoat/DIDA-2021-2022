@@ -21,7 +21,7 @@ message CreateStorageNodeRequest {
 	string serverId = 1;
 	string url = 2;
 	int32 gossipDelay = 3; // in milisseconds
-
+	int32 replicaId = 4;
 }
 
 message CreateStorageNodeReply {
