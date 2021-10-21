@@ -9,14 +9,14 @@ using System.Threading;
 
 namespace PuppetMasterCLI
 {
-    class PuppetMaster
+    class PuppetMasterLogic
     {
         // Init Log Server
-        private LogServer ls = new LogServer();
+        private LogServer logServer = new LogServer();
 
         private Dictionary<string, PCSManager> pcsManagers = new Dictionary<string, PCSManager>();
 
-        // List of Workers Nodes  
+        // List of Workers Nodes
         private List<WorkerNodeStruct> workerNodes = new List<WorkerNodeStruct>();
 
         // List of Storage Nodes
@@ -29,19 +29,18 @@ namespace PuppetMasterCLI
         private GrpcChannel schedulerChannel;
 
         private int replicaIdCounter;
-        public PuppetMaster(List<string> pcsList)
+        public PuppetMasterLogic(List<string> pcsList)
         {
+            replicaIdCounter = 0;
             foreach (string pcsURL in pcsList)
             {
                 var pcsHost = ExtractHostFromURL(pcsURL);
                 pcsManagers.Add(pcsHost, new PCSManager(pcsURL));
-                replicaIdCounter = 0;
             }
         }
 
         public void CreateScheduler(string serverId, string url)
         {
-
             Console.WriteLine("Create Schedular: ", serverId, url);
             // Init the Schedular in a new process
             ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -58,7 +57,6 @@ namespace PuppetMasterCLI
                 schedulerProcess = Process.Start(startInfo);
                 schedulerChannel = GrpcChannel.ForAddress(url);
                 schedulerServiceClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
-
             }
             catch (Exception e)
             {
@@ -95,7 +93,7 @@ namespace PuppetMasterCLI
         {
             var pcsHost = ExtractHostFromURL(url);
             Console.WriteLine("Create Worker: U: " + url + " - H: " + pcsHost);
-            pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay, debug, ls.GetURL());
+            pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay, debug, logServer.GetURL());
 
             WorkerNodeStruct node;
             node.serverId = serverId;
@@ -148,9 +146,6 @@ namespace PuppetMasterCLI
             {
                 var key = line.Split(",")[0];
                 var value = line.Split(",")[1];
-                Console.WriteLine("Line: " + line);
-                Console.WriteLine("Key: " + key + " Value: " + value);
-
 
                 KeyValuePair valuePair = new KeyValuePair
                 {
@@ -200,7 +195,7 @@ namespace PuppetMasterCLI
                 }
             }
         }
-        public void ListServer(string serverId)
+        public void ListServer(string serverId) // TODO: Snapshot???
         {
             // Lists all objects stored on the server identified by server id
 
@@ -321,7 +316,7 @@ namespace PuppetMasterCLI
             if (schedulerProcess != null)
                 schedulerProcess.Kill();
             WaitForSchedulerProcess();
-            ls.ShutDown();
+            logServer.ShutDown();
         }
 
         public string ExtractHostFromURL(string url)

@@ -15,9 +15,7 @@ namespace PuppetMasterCLI
         private string url;
         private SchedulerService.SchedulerServiceClient schClient;
 
-        private PCSService.PCSServiceClient client; // Sao varios PCS no final
-//        private Dictionary<string, GrpcChannel> pcsChannels = new Dictionary<string, GrpcChannel>(); //TODO
-//        private Dictionary<string, PCSService.PCSServiceClient> pcsClients = new Dictionary<string, PCSService.PCSServiceClient>(); //TODO
+        private PCSService.PCSServiceClient client;
 
         public PCSManager(string url)
         {
@@ -79,7 +77,6 @@ namespace PuppetMasterCLI
 
         public void createStorageNode(string serverId, string url, int gossipDelay, int replicaId)
         {
-            // GRPC call to PCS in order to create ...
             try
             {
                 var reply = client.CreateStorageNode(

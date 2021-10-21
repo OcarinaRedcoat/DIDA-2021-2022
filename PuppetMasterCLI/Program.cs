@@ -17,7 +17,7 @@ namespace PuppetMasterCLI
             ImportConfigFile("pcs.txt");
 
 
-            PuppetMaster pm = new PuppetMaster(knownPCSs);
+            PuppetMasterLogic pm = new PuppetMasterLogic(knownPCSs);
             string line = "";
 
             Console.WriteLine("Do you want to load a Config File [y/n]");
@@ -55,7 +55,7 @@ namespace PuppetMasterCLI
 
         }
 
-        static void ImportFile(PuppetMaster pm, string fileName)
+        static void ImportFile(PuppetMasterLogic pm, string fileName)
         {
             // Input file name. Then each line is parsed according to the specs.
             string[] lines = System.IO.File.ReadAllLines(fileName);
@@ -69,7 +69,7 @@ namespace PuppetMasterCLI
 
         }
 
-        static void ParseConfigScriptLine(PuppetMaster pm, string scritpLine)
+        static void ParseConfigScriptLine(PuppetMasterLogic pm, string scritpLine)
         {
             Console.WriteLine("Script Line: " + scritpLine);
             string[] configArgs = scritpLine.Split(' ');

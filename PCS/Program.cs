@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
 
 namespace PCS
 {
@@ -6,10 +8,24 @@ namespace PCS
     {
         static void Main(string[] args)
         {
-            var server = new PCSServer();
-            Console.WriteLine("Hello World from PCS!");
+            PCSLogic pcsLogic = new PCSLogic();
+            var server = new PCSServer(ref pcsLogic);
+            Console.WriteLine("Hello World from PCS (" + GetLocalIPAddress()  + ") !");
             Console.ReadLine();
             server.ShutDown();
+        }
+
+        public static string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
         }
     }
 }

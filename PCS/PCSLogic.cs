@@ -7,11 +7,11 @@ using System.Text;
 
 namespace PCS
 {
-    abstract class PCSLogic
+    class PCSLogic
     {
-        private static ConcurrentDictionary<string, Process> processes  = new ConcurrentDictionary<string, Process>();
+        private ConcurrentDictionary<string, Process> processes  = new ConcurrentDictionary<string, Process>();
 
-        public static void CreateWorkerNode(string serverId, string url, int gossipDelay, bool debug, string logURL)
+        public CreateWorkerNodeReply CreateWorkerNode(string serverId, string url, int gossipDelay, bool debug, string logURL)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
@@ -28,9 +28,13 @@ namespace PCS
             {
                 Console.WriteLine(e.Message);
             }
+            return new CreateWorkerNodeReply
+            {
+                Okay = true
+            };
         }
 
-        public static void CreateStorageNode(string serverId, string url, int gossipDelay, int replicaId)
+        public CreateStorageNodeReply CreateStorageNode(string serverId, string url, int gossipDelay, int replicaId)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
@@ -47,23 +51,32 @@ namespace PCS
             {
                 Console.WriteLine(e.Message);
             }
+            return new CreateStorageNodeReply
+            {
+                Okay = true
+            };
         }
 
-        public static void NukeStorage(string serverId)
+        public NukeReply NukeStorage(string serverId)
         {
             Process storageProcess = processes[serverId];
             storageProcess.Kill();
+            return new NukeReply
+            {
+                Okay = true
+            };
         }
 
-        public static void Nuke()
+        public NukeAllReply Nuke()
         {
             foreach (KeyValuePair<string, Process> proc in processes)
             {
                 proc.Value.Kill();   
             }
+            return new NukeAllReply { };
         }
 
 
-        public static void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
+        public void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
     }
 }
