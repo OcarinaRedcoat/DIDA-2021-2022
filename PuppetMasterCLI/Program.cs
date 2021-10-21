@@ -8,12 +8,14 @@ namespace PuppetMasterCLI
     class Program
     {
         static bool run = true;
+        private static List<string> knownPCSs = new List<string>();
 
         static void Main(string[] args)
         {
             Console.WriteLine("Initializing the PuppetMasterCLI");
-            List<string> knownPCSs = new List<string>();
-            knownPCSs.Add("http://" + LogServer.GetLocalIPAddress() + ":10000");
+            // Config file to each PCS, NOT GET LOCAL IP
+            ImportConfigFile("pcs.txt");
+
 
             PuppetMaster pm = new PuppetMaster(knownPCSs);
             string line = "";
@@ -39,7 +41,20 @@ namespace PuppetMasterCLI
             pm.Exit();
 
         }
-        
+
+        static void ImportConfigFile(string fileName)
+        {
+            // Input file name. Then each line is parsed according to the specs.
+            string[] lines = System.IO.File.ReadAllLines(fileName);
+
+            foreach (string line in lines)
+            {
+                var url = ParseUrl(line);
+                knownPCSs.Add(url);
+            }
+
+        }
+
         static void ImportFile(PuppetMaster pm, string fileName)
         {
             // Input file name. Then each line is parsed according to the specs.
