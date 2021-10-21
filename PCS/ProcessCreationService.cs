@@ -20,7 +20,7 @@ namespace PCS
 
         public override Task<CreateStorageNodeReply> CreateStorageNode(CreateStorageNodeRequest request, ServerCallContext context)
         {
-            PCSLogic.CreateStorageNode(request.ServerId, request.Url, request.GossipDelay);
+            PCSLogic.CreateStorageNode(request.ServerId, request.Url, request.GossipDelay, request.ReplicaId);
             return Task.FromResult(new CreateStorageNodeReply
             {
                 Okay = true
@@ -34,6 +34,12 @@ namespace PCS
             {
                 Okay = true
             });
+        }
+
+        public override Task<NukeAllReply> Nuke(NukeAllRequest request, ServerCallContext context)
+        {
+            PCSLogic.Nuke();
+            return Task.FromResult(new NukeAllReply{});
         }
     }
 

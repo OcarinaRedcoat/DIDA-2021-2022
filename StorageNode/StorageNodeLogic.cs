@@ -12,7 +12,12 @@ namespace StorageNode
     {
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
-        private int replicaId = 1;
+        private int replicaId;
+
+        public StorageNodeLogic(int replicaId)
+        {
+            this.replicaId = replicaId;
+        }
 
         public DIDAStorage.DIDARecord Read(string id, DIDAStorage.DIDAVersion version)
         {

@@ -25,15 +25,13 @@ namespace PuppetMasterCLI
         private bool debug = false;
         private Process schedulerProcess;
 
-        private SchedulerService.SchedulerServiceClient schedulerServiceClient;
-        private GrpcChannel schedulerChannel;
-
         public PuppetMaster(List<string> pcsList)
         {
             foreach (string pcsURL in pcsList)
             {
                 var pcsHost = pcsURL.Split("//")[1].Split(":")[0];
                 pcsManagers.Add(pcsHost, new PCSManager(pcsURL));
+                replicaIdCounter = 0;
             }
         }
 
@@ -76,7 +74,7 @@ namespace PuppetMasterCLI
         public void CreateStorage(string serverId, string url, int gossipDelay)
         {
             var pcsHost = url.Split("//")[1].Split(":")[0];
-            pcsManagers[pcsHost].createStorageNode(serverId, url, gossipDelay);
+            pcsManagers[pcsHost].createStorageNode(serverId, url, gossipDelay, replicaIdCounter);
 
             StorageNodeStruct node;
             node.serverId = serverId;
@@ -86,6 +84,7 @@ namespace PuppetMasterCLI
 
             storageNodes.Add(node);
 
+            replicaIdCounter++;
         }
         public void CreateWorker(string serverId, string url, int gossipDelay)
         {
@@ -276,9 +275,16 @@ namespace PuppetMasterCLI
 
         public void Exit()
         {
+            foreach (KeyValuePair<string, PCSManager> pcs in pcsManagers)
+            {
+                pcs.Value.exit();
+            }
+            if (schedulerProcess != null)
+                schedulerProcess.Kill();
             WaitForSchedulerProcess();
             ls.ShutDown();
         }
+
     }
 
     public struct StorageNodeStruct
