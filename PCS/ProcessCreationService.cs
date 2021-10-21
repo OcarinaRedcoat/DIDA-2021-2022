@@ -1,6 +1,8 @@
 ﻿using Grpc.Core;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,7 +49,7 @@ namespace PCS
     class PCSServer
     {
         private Int32 port = 10000;
-        private string host = "localhost";
+        private string host = GetLocalIPAddress();
 
         Server server;
 
@@ -59,6 +61,19 @@ namespace PCS
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
             server.Start();
+        }
+
+        public static string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
         }
 
         public void ShutDown()
