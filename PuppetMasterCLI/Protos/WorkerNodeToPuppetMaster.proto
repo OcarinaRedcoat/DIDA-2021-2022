@@ -1,6 +1,14 @@
 syntax = "proto3";
 
 service LogServerService {
-
+	rpc Log(LogRequest) returns (LogReply) {}
 }
 
+message LogRequest {
+	string workerId = 1;
+	string message = 2;
+}
+
+message LogReply {
+	bool okay = 1;
+}

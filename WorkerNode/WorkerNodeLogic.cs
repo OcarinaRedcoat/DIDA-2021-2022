@@ -10,6 +10,22 @@ namespace WorkerNode
 {
     class WorkerNodeLogic
     {
+        private bool debugMode;
+        private GrpcChannel logChannel;
+        private LogServerService.LogServerServiceClient logClient;
+        private string workerId;
+
+        public WorkerNodeLogic(string serverId, bool debug, string logURL)
+        {
+            debugMode = debug;
+            workerId = serverId;
+            if (debugMode)
+            {
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+                logChannel = GrpcChannel.ForAddress(logURL);
+                logClient = new LogServerService.LogServerServiceClient(logChannel);
+            }
+        }
         public string ProcessOperator(DIDARequest req)
         {
             string output = "";
@@ -33,6 +49,15 @@ namespace WorkerNode
 
                     Console.WriteLine("BBBBB");
                     output = _op.ProcessRecord(req.meta, req.input, req.chain[req.next - 1].output);
+
+                    if (debugMode)
+                    {
+                        logClient.Log(new LogRequest
+                        {
+                            WorkerId = workerId,
+                            Message = output
+                        });
+                    }
                 }
 
 

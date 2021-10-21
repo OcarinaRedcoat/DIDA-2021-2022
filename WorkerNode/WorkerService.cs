@@ -11,7 +11,12 @@ namespace WorkerNode
     class WorkerNodeService : WorkerService.WorkerServiceBase
     {
 
-        WorkerNodeLogic wnl = new WorkerNodeLogic();
+        WorkerNodeLogic wnl;
+
+        public WorkerNodeService(string serverId, bool debug, string logURL)
+        {
+            wnl = new WorkerNodeLogic(serverId, debug, logURL);
+        }
 
         public ProcessOperatorReply ProcessOperatorSerialize(DIDAMetaRecord grpcMeta, string grpcInput, int grpcNext, int grpcChainSize, RepeatedField<DIDAAssignment> grpcChain)
         {
@@ -135,7 +140,7 @@ namespace WorkerNode
         private string serverId;
         Server server;
 
-        public WorkerServer(string serverId, string host, int port)
+        public WorkerServer(string serverId, string host, int port, bool debug, string logURL)
         {
             this.serverId = serverId;
             this.host = host;
@@ -143,7 +148,7 @@ namespace WorkerNode
 
             server = new Server
             {
-                Services = { WorkerService.BindService(new WorkerNodeService()) },
+                Services = { WorkerService.BindService(new WorkerNodeService(serverId, debug, logURL)) },
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 

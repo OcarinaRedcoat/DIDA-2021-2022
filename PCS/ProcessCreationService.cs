@@ -11,7 +11,7 @@ namespace PCS
 
         public override Task<CreateWorkerNodeReply> CreateWorkerNode(CreateWorkerNodeRequest request, ServerCallContext context)
         {
-            PCSLogic.CreateWorkerNode(request.ServerId, request.Url, request.GossipDelay);
+            PCSLogic.CreateWorkerNode(request.ServerId, request.Url, request.GossipDelay, request.Debug, request.LogURL);
             return Task.FromResult(new CreateWorkerNodeReply
             {
                 Okay = true

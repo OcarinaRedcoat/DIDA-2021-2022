@@ -29,7 +29,7 @@ namespace PuppetMasterCLI
             schClient = new SchedulerService.SchedulerServiceClient(channelScheduler);
         }
 
-        public void createWorkerNode(string serverId, string url, int gossipDelay) // return the Node
+        public void createWorkerNode(string serverId, string url, int gossipDelay, bool debug, string logURL) // return the Node
         {
             // GRPC call to PCS in order to create ...
             try
@@ -39,7 +39,9 @@ namespace PuppetMasterCLI
                     {
                         ServerId = serverId,
                         Url = url,
-                        GossipDelay = gossipDelay
+                        GossipDelay = gossipDelay,
+                        Debug = debug,
+                        LogURL = logURL
                     }
                 );
                 if (reply.Okay)

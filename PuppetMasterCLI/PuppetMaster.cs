@@ -93,7 +93,7 @@ namespace PuppetMasterCLI
         public void CreateWorker(string serverId, string url, int gossipDelay)
         {
             var pcsHost = url.Split("//")[1].Split(":")[0];
-            pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay);
+            pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay, debug, ls.GetURL());
         }
 
         public void ClientRequest(string inputAppFileName, string input)
