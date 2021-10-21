@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 
 namespace PuppetMasterCLI
 {
@@ -11,7 +13,7 @@ namespace PuppetMasterCLI
         {
             Console.WriteLine("Initializing the PuppetMasterCLI");
             List<string> knownPCSs = new List<string>();
-            knownPCSs.Add("http://localhost:10000");
+            knownPCSs.Add("http://" + LogServer.GetLocalIPAddress() + ":10000");
 
             PuppetMaster pm = new PuppetMaster(knownPCSs);
             string line = "";
@@ -60,25 +62,37 @@ namespace PuppetMasterCLI
             switch (command)
             {
                 case "scheduler":
-                    pm.CreateScheduler(configArgs[1], configArgs[2]);
+                    var schedulerId = configArgs[1];
+                    var schedulerUrl = ParseUrl(configArgs[2]);
+                    pm.CreateScheduler(schedulerId, schedulerUrl);
                     break;
                 case "storage":
-                    pm.CreateStorage(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
+                    var storageId = configArgs[1];
+                    var storageUrl = ParseUrl(configArgs[2]);
+                    var gossipDelayStorage = Int32.Parse(configArgs[3]);
+                    pm.CreateStorage(storageId, storageUrl, gossipDelayStorage);
                     break;
                 case "worker":
-                    pm.CreateWorker(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
+                    var workerId = configArgs[1];
+                    var workerUrl = ParseUrl(configArgs[2]);
+                    var gossiDelayWorker = Int32.Parse(configArgs[3]);
+                    pm.CreateWorker(workerId, workerUrl, gossiDelayWorker);
                     break;
                 case "client":
-                    pm.ClientRequest(configArgs[2], configArgs[1]);
+                    var inputAppFileName = configArgs[2];
+                    var input = configArgs[1];
+                    pm.ClientRequest(inputAppFileName, input);
                     break;
                 case "populate":
-                    pm.Populate(configArgs[1]);
+                    var dataFileName = configArgs[1];
+                    pm.Populate(dataFileName);
                     break;
                 case "status":
                     pm.Status();
                     break;
                 case "listServer":
-                    pm.ListServer(configArgs[1]);
+                    var serverId = configArgs[1];
+                    pm.ListServer(serverId);
                     break;
                 case "listGlobal":
                     pm.ListGlobal();
@@ -88,15 +102,41 @@ namespace PuppetMasterCLI
                     pm.Debug();
                     break;
                 case "crash":
-                    pm.Crash(configArgs[1]);
+                    var crashStorageId = configArgs[1];
+                    pm.Crash(crashStorageId);
                     break;
                 case "wait_interval":
-                    pm.Wait(Int32.Parse(configArgs[1]));
+                    var interval = Int32.Parse(configArgs[1]);
+                    pm.Wait(interval);
                     break;
                 case "exit":
                     run = false;
                     break;
             }
+        }
+
+        public static string ParseUrl(string url)
+        {
+            string host = url.Split("//")[1].Split(":")[0];
+            string port = url.Split("//")[1].Split(":")[1];
+            if (host.Equals("localhost"))
+            {
+                host = GetLocalIPAddress();
+            }
+            return "http://" + host + ":" + port;
+        }
+
+        public static string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
         }
     }
 }

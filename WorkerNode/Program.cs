@@ -9,6 +9,7 @@ namespace WorkerNode
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World from WorkerNode!");
+            var serverId = args[0];
             var host = args[1].Split("//")[1].Split(":")[0];
             var port = args[1].Split("//")[1].Split(":")[1];
             var gossipDelay = Int32.Parse(args[2]);
@@ -18,7 +19,8 @@ namespace WorkerNode
             if (debug) Console.WriteLine("Debug mode activated...");
 
             Console.WriteLine("Args: " + host + " : " + port);
-            WorkerServer workerServer = new WorkerServer(args[0], host, Int32.Parse(port), debug, logURL);
+            WorkerNodeLogic wnl = new WorkerNodeLogic(serverId, gossipDelay, debug, logURL);
+            WorkerServer workerServer = new WorkerServer(serverId, host, Int32.Parse(port), ref wnl);
 
             Console.ReadLine();
             workerServer.ShutDown();

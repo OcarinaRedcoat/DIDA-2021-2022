@@ -16,6 +16,7 @@
 	<Protobuf Include="Protos\PuppetMasterToPCS.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\PuppetMasterToScheduler.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" />
+	<Protobuf Include="Protos\Status.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
 	
   </ItemGroup>

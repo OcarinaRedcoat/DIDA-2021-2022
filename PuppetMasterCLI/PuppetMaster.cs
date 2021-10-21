@@ -17,10 +17,10 @@ namespace PuppetMasterCLI
         private Dictionary<string, PCSManager> pcsManagers = new Dictionary<string, PCSManager>();
 
         // List of Workers Nodes  
-        private List<string> workerNodes = new List<string>();
+        private List<WorkerNodeStruct> workerNodes = new List<WorkerNodeStruct>();
 
         // List of Storage Nodes
-        List<StorageNodeStruct> storageNodes = new List<StorageNodeStruct>();
+        private List<StorageNodeStruct> storageNodes = new List<StorageNodeStruct>();
 
         private bool debug = false;
         private Process schedulerProcess;
@@ -33,7 +33,7 @@ namespace PuppetMasterCLI
         {
             foreach (string pcsURL in pcsList)
             {
-                var pcsHost = pcsURL.Split("//")[1].Split(":")[0];
+                var pcsHost = ExtractHostFromURL(pcsURL);
                 pcsManagers.Add(pcsHost, new PCSManager(pcsURL));
                 replicaIdCounter = 0;
             }
@@ -47,7 +47,7 @@ namespace PuppetMasterCLI
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
             startInfo.UseShellExecute = true;
-            startInfo.FileName = Directory.GetCurrentDirectory() +  "\\..\\..\\..\\..\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe";
+            startInfo.FileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
             startInfo.Arguments = serverId + " " + url;
 
@@ -77,14 +77,15 @@ namespace PuppetMasterCLI
 
         public void CreateStorage(string serverId, string url, int gossipDelay)
         {
-            var pcsHost = url.Split("//")[1].Split(":")[0];
+            var pcsHost = ExtractHostFromURL(url);
             pcsManagers[pcsHost].createStorageNode(serverId, url, gossipDelay, replicaIdCounter);
 
             StorageNodeStruct node;
             node.serverId = serverId;
             node.url = url;
             node.channel = GrpcChannel.ForAddress(url);
-            node.client = new PMStorageService.PMStorageServiceClient(node.channel);
+            node.storageClient = new PMStorageService.PMStorageServiceClient(node.channel);
+            node.statusClient = new StatusService.StatusServiceClient(node.channel);
 
             storageNodes.Add(node);
 
@@ -92,17 +93,27 @@ namespace PuppetMasterCLI
         }
         public void CreateWorker(string serverId, string url, int gossipDelay)
         {
-            var pcsHost = url.Split("//")[1].Split(":")[0];
+            var pcsHost = ExtractHostFromURL(url);
+            Console.WriteLine("Create Worker: U: " + url + " - H: " + pcsHost);
             pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay, debug, ls.GetURL());
+
+            WorkerNodeStruct node;
+            node.serverId = serverId;
+            node.url = url;
+            node.channel = GrpcChannel.ForAddress(url);
+            node.statusClient = new StatusService.StatusServiceClient(node.channel);
+
+            workerNodes.Add(node);
         }
 
         public void ClientRequest(string inputAppFileName, string input)
         {
-            RunApplicationRequest request = new RunApplicationRequest {
+            RunApplicationRequest request = new RunApplicationRequest
+            {
                 Input = input
             };
 
-           // Parse the input AppFileName
+            // Parse the input AppFileName
             using (StreamReader reader = System.IO.File.OpenText(inputAppFileName))
             {
                 string rline = String.Empty;
@@ -150,7 +161,7 @@ namespace PuppetMasterCLI
                 request.Data.Add(valuePair);
             }
 
-            storageNodes[0].client.Populate(request);
+            storageNodes[0].storageClient.Populate(request);
 
 
         }
@@ -162,8 +173,32 @@ namespace PuppetMasterCLI
         }
 
 
-        public void Status() {
+        public void Status()
+        {
             // Request the worker nodes to print their status
+            foreach (StorageNodeStruct storageNode in storageNodes)
+            {
+                try
+                {
+                    storageNode.statusClient.StatusAsync(new StatusRequest { });
+                }
+                catch (Exception e)
+                {
+                    // TODO: Storage node down
+                }
+            }
+
+            foreach (WorkerNodeStruct workerNode in workerNodes)
+            {
+                try
+                {
+                    workerNode.statusClient.StatusAsync(new StatusRequest { });
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Exception: " + e);
+                }
+            }
         }
         public void ListServer(string serverId)
         {
@@ -175,7 +210,7 @@ namespace PuppetMasterCLI
             {
                 if (node.serverId.Equals(serverId))
                 {
-                    DumpReply reply = node.client.Dump(req);
+                    DumpReply reply = node.storageClient.Dump(req);
 
                     Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
                     foreach (DIDARecord record in reply.Data)
@@ -218,7 +253,7 @@ namespace PuppetMasterCLI
             {
                 // Make a DumpRequest
                 DumpRequest req = new DumpRequest { };
-                DumpReply reply = node.client.Dump(req);
+                DumpReply reply = node.storageClient.Dump(req);
 
                 Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
                 foreach (DIDARecord record in reply.Data)
@@ -231,7 +266,7 @@ namespace PuppetMasterCLI
                     else
                     {
                         if (data.TryAdd(record.Id, new List<DIDARecord>()))
-                            data[record.Id].Add(record); 
+                            data[record.Id].Add(record);
                     }
                 }
 
@@ -259,12 +294,12 @@ namespace PuppetMasterCLI
             // Force a storage process to terminate
 
             string pcsHost;
-            foreach(StorageNodeStruct node in storageNodes)
+            foreach (StorageNodeStruct node in storageNodes)
             {
                 if (node.serverId == serverId)
                 {
                     string storageUrl = node.url;
-                    pcsHost = storageUrl.Split("//")[1].Split(":")[0];
+                    pcsHost = ExtractHostFromURL(storageUrl);
                     var pcs = pcsManagers[pcsHost];
                     pcs.Crash(serverId);
                     return;
@@ -289,6 +324,16 @@ namespace PuppetMasterCLI
             ls.ShutDown();
         }
 
+        public string ExtractHostFromURL(string url)
+        {
+            string host = url.Split("//")[1].Split(":")[0];
+            if (host.Equals("localhost"))
+            {
+                host = LogServer.GetLocalIPAddress();
+            }
+            return host;
+        }
+
     }
 
     public struct StorageNodeStruct
@@ -296,6 +341,15 @@ namespace PuppetMasterCLI
         public string serverId;
         public string url;
         public GrpcChannel channel;
-        public PMStorageService.PMStorageServiceClient client;
+        public PMStorageService.PMStorageServiceClient storageClient;
+        public StatusService.StatusServiceClient statusClient;
+    }
+
+    public struct WorkerNodeStruct
+    {
+        public string serverId;
+        public string url;
+        public GrpcChannel channel;
+        public StatusService.StatusServiceClient statusClient;
     }
 }

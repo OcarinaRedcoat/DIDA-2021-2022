@@ -18,6 +18,7 @@
 	    <Protobuf Include="Protos\StorageNodeToStorageNode.proto" GrpcServices="Server" />
 	    <Protobuf Include="Protos\WorkerNodeToStorageNode.proto" GrpcServices="Server"  ProtoRoot="Protos\"/>
 	    <Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Server"  ProtoRoot="Protos\"/>
+	    <Protobuf Include="Protos\Status.proto" GrpcServices="Server" />
 	
   </ItemGroup>
 </Project>

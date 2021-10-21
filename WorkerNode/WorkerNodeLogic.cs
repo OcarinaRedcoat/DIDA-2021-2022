@@ -3,6 +3,8 @@ using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 
@@ -15,7 +17,7 @@ namespace WorkerNode
         private LogServerService.LogServerServiceClient logClient;
         private string workerId;
 
-        public WorkerNodeLogic(string serverId, bool debug, string logURL)
+        public WorkerNodeLogic(string serverId, int gossipDelay, bool debug, string logURL)
         {
             debugMode = debug;
             workerId = serverId;
@@ -26,6 +28,13 @@ namespace WorkerNode
                 logClient = new LogServerService.LogServerServiceClient(logChannel);
             }
         }
+
+        public StatusReply Status()
+        {
+            Console.WriteLine("This is my Status: " + workerId);
+            return new StatusReply { };
+        }
+
         public string ProcessOperator(DIDARequest req)
         {
             string output = "";
@@ -36,7 +45,7 @@ namespace WorkerNode
                 // ASync ??
                 DIDAWorker.IDIDAOperator _op = extractOperator(className);
 
-                _op.ConfigureStorage(new DIDAStorageNode[] { new DIDAStorageNode { host = "localhost", port = 3000, serverId = "s1" } }, MyLocationFunction);
+                _op.ConfigureStorage(new DIDAStorageNode[] { new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" } }, MyLocationFunction);
 
                 Console.WriteLine("Input: " + req.input);
 
@@ -72,7 +81,8 @@ namespace WorkerNode
 
         private static DIDAStorageNode MyLocationFunction(string id, OperationType type)
         {
-            return new DIDAStorageNode { host = "localhost", port = 3000, serverId = "s1" };
+            // Hashing to choose Storage
+            return new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" };
         }
 
         private DIDAWorker.IDIDAOperator extractOperator(string className)
@@ -113,5 +123,19 @@ namespace WorkerNode
             }
             throw new Exception("Type not found!");
         }
+
+        public static string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
+
     }
 }

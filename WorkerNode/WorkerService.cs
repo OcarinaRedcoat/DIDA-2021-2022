@@ -13,9 +13,9 @@ namespace WorkerNode
 
         WorkerNodeLogic wnl;
 
-        public WorkerNodeService(string serverId, bool debug, string logURL)
+        public WorkerNodeService(ref WorkerNodeLogic wnl)
         {
-            wnl = new WorkerNodeLogic(serverId, debug, logURL);
+            this.wnl = wnl;
         }
 
         public ProcessOperatorReply ProcessOperatorSerialize(DIDAMetaRecord grpcMeta, string grpcInput, int grpcNext, int grpcChainSize, RepeatedField<DIDAAssignment> grpcChain)
@@ -92,14 +92,6 @@ namespace WorkerNode
             };
         }
 
-        class WorkerStatusService : StatusService.StatusServiceBase
-        {
-            public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
-            {
-                return base.Status(request, context);
-            }
-        }
-
         public ProcessOperatorRequest GenerateRequest(DIDAWorker.DIDARequest req)
         {
             DIDAMetaRecord metaRecord = new DIDAMetaRecord
@@ -141,6 +133,22 @@ namespace WorkerNode
         }
     }
 
+    class WorkerStatusService : StatusService.StatusServiceBase
+    {
+
+        WorkerNodeLogic wnl;
+
+        public WorkerStatusService(ref WorkerNodeLogic wnl)
+        {
+            this.wnl = wnl;
+        }
+
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(wnl.Status());
+        }
+    }
+
     class WorkerServer
     {
         private int port;
@@ -148,7 +156,7 @@ namespace WorkerNode
         private string serverId;
         Server server;
 
-        public WorkerServer(string serverId, string host, int port, bool debug, string logURL)
+        public WorkerServer(string serverId, string host, int port, ref WorkerNodeLogic wnl)
         {
             this.serverId = serverId;
             this.host = host;
@@ -156,7 +164,11 @@ namespace WorkerNode
 
             server = new Server
             {
-                Services = { WorkerService.BindService(new WorkerNodeService(serverId, debug, logURL)) },
+                Services =
+                {
+                    WorkerService.BindService(new WorkerNodeService(ref wnl)),
+                    StatusService.BindService(new WorkerStatusService(ref wnl))
+                },
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 

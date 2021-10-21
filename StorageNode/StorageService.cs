@@ -136,6 +136,18 @@ namespace StorageNode
         }
     }
 
+    class StorageStatusService : StatusService.StatusServiceBase
+    {
+        private StorageNodeLogic snl;
+        public StorageStatusService(ref StorageNodeLogic logic)
+        {
+            this.snl = logic;
+        }
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(snl.Status());
+        }
+    }
 
     class StorageServer
     {
@@ -152,7 +164,12 @@ namespace StorageNode
 
             server = new Server
             {
-                Services = { StorageService.BindService(new StorageNodeService(ref logic)), PMStorageService.BindService(new PuppetMasterStorageService(ref logic)) } ,
+                Services =
+                {
+                    StorageService.BindService(new StorageNodeService(ref logic)),
+                    PMStorageService.BindService(new PuppetMasterStorageService(ref logic)),
+                    StatusService.BindService(new StorageStatusService(ref logic))
+                } ,
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 

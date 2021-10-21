@@ -19,6 +19,20 @@ namespace StorageNode
             this.replicaId = replicaId;
         }
 
+        public StatusReply Status()
+        {
+            Console.WriteLine("This is my Status: " + replicaId);
+            foreach (KeyValuePair<string, List<DIDAStorage.DIDARecord>> pair in storage)
+            {
+                Console.WriteLine("Key: " + pair.Key);
+                foreach (DIDAStorage.DIDARecord rec in pair.Value)
+                {
+                    Console.WriteLine("Value: " + rec.val + ", Version: (" + rec.version.versionNumber + ", " + rec.version.replicaId + ")");
+                }
+            }
+            return new StatusReply { };
+        }
+
         public DIDAStorage.DIDARecord Read(string id, DIDAStorage.DIDAVersion version)
         {
             Console.WriteLine("Reading... " + id);
