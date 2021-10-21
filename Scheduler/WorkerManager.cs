@@ -1,10 +1,7 @@
-﻿using Google.Protobuf.Collections;
-using Grpc.Core;
-using Grpc.Net.Client;
+﻿using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Scheduler
 {
@@ -14,10 +11,14 @@ namespace Scheduler
 
         private WorkerService.WorkerServiceClient client;
 
+        // url+port to id FIXME maybe not necessary
+        private Dictionary<string, string> urlToID = new Dictionary<string, string>();
+
         private Dictionary<string, Hosts> workersHosts = new Dictionary<string, Hosts>();
         private Dictionary<string, GrpcChannel> workersChannels = new Dictionary<string, GrpcChannel>();
         private Dictionary<string, WorkerService.WorkerServiceClient> workersClients = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
+        private int IDcounter = 0;
         public WorkerManager()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -83,10 +84,73 @@ namespace Scheduler
             }
         }
 
-        public void AddWorker(string workerId, string workerURL)
+        public RunApplicationReply RunApplication(IList<DIDAOperatorID> operators, string input, int chainSize)
         {
+            IList<DIDAAssignment> assignment = LoadBalancer(operators);
+
+            // DIDARequest
+            ProcessOperatorRequest request = new ProcessOperatorRequest
+            {
+                Meta = new DIDAMetaRecord
+                {
+                    Id = Interlocked.Increment(ref IDcounter)
+                },
+                Input = input,
+                Next = 0,
+                ChainSize = chainSize
+            };
+            request.Chain.Add(assignment);
+
+
+            // Send DIDARequest to first worker 
+            try
+            {
+                ProcessOperatorReply reply =  workersClients[urlToID[request.Chain[0].Host + request.Chain[0].Port]].ProcessOperator(request);
+
+            } 
+            catch ( Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return new RunApplicationReply { Okay = false };
+            }
+
+            return new RunApplicationReply { Okay = true };
+        }
+
+        private IList<DIDAAssignment> LoadBalancer(IList<DIDAOperatorID> operators)
+        {
+            //FIXME dumb algo just a circle
+            IList<DIDAAssignment> assignment = new List<DIDAAssignment>();
+
+            List<Hosts> hosts = new List<Hosts>(workersHosts.Values);
+
+            for ((int i, int j) = (0,0); i < operators.Count; j = ++i % workersHosts.Count)
+            {
+                assignment.Add(new DIDAAssignment
+                {
+                    OperatorId = operators[i],
+                    Host = hosts[j].host,
+                    Port =hosts[j].port,
+                    Output = ""
+                });
+            }
+            Console.WriteLine(assignment.ToString());
+
+
+            return assignment;
+        }
+
+        public AddWorkerNodeReply AddWorker(string workerId, string workerURL)
+        {
+            //TODO lock this mofo
+
+            Console.WriteLine(workerId + " " + workerURL);
 
             Hosts hosts = parseUrl(workerURL);
+
+            //FIXME maybe not necessary
+            urlToID.Add(hosts.host + hosts.port, workerId);
+
             workersHosts.Add(workerId, hosts);
             Console.WriteLine("Added WorkerId: " + workerId + " Host: " + hosts.host + " Port: " + hosts.port);
 
@@ -94,6 +158,8 @@ namespace Scheduler
             var clientAux = new WorkerService.WorkerServiceClient(channelAux);
             workersChannels.Add(workerId, channelAux);
             workersClients.Add(workerId, clientAux);
+
+            return new AddWorkerNodeReply { Okay = true };
 
         }
 

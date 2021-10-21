@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "Struct.proto";
+
+service SchedulerService {
+	rpc AddWorkerNode(AddWorkerNodeRequest) returns (AddWorkerNodeReply) {}
+	rpc RunApplication(RunApplicationRequest) returns (RunApplicationReply) {}
+}
+
+message AddWorkerNodeRequest {
+	string serverId = 1;
+	string url = 2;
+}
+
+message AddWorkerNodeReply {
+	bool okay = 1;
+}
+
+message RunApplicationRequest {
+	string input = 1;
+	int32 chainSize = 2;
+	repeated DIDAOperatorID chain = 3;
+}
+
+message RunApplicationReply {
+	bool okay = 1;
+}

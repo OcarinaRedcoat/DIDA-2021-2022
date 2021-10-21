@@ -69,7 +69,7 @@ namespace PuppetMasterCLI
                     pm.CreateWorker(configArgs[1], configArgs[2], Int32.Parse(configArgs[3]));
                     break;
                 case "client":
-                    pm.ClientRequest(configArgs[1]);
+                    pm.ClientRequest(configArgs[1], configArgs[2]);
                     break;
                 case "populate":
                     pm.Populate(configArgs[1]);

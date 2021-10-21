@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "Struct.proto";
+
 // Schedular to WorkerNode & WorkerNodeToWorkerNode
 
 service WorkerService {
@@ -9,11 +11,6 @@ service WorkerService {
 message DIDAMetaRecord {
 	int32 id = 1;
 	// other metadata to be specified by the students
-}
-
-message DIDAOperatorID {
-	string classname = 1;
-	int32 order = 2;
 }
 
 message DIDAAssignment {

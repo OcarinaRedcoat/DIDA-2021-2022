@@ -12,15 +12,12 @@ namespace Scheduler
         WorkerManager wm = new WorkerManager();
         public override Task<AddWorkerNodeReply> AddWorkerNode(AddWorkerNodeRequest request, ServerCallContext context)
         {
-            Console.WriteLine(request.ServerId + " " + request.Url);
-            wm.AddWorker(request.ServerId, request.Url);
-            Console.WriteLine("Before ProcessOperator");
-            wm.ProcessOperator();
+            return Task.FromResult(wm.AddWorker(request.ServerId, request.Url));
+        }
 
-            return Task.FromResult(new AddWorkerNodeReply
-            {
-                Okay = true
-            });
+        public override Task<RunApplicationReply> RunApplication(RunApplicationRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(wm.RunApplication(request.Chain, request.Input, request.ChainSize));
         }
 
     }

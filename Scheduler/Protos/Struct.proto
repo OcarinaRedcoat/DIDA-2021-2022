@@ -1,0 +1,6 @@
+﻿syntax = "proto3";
+
+message DIDAOperatorID {
+	string classname = 1;
+	int32 order = 2;
+}

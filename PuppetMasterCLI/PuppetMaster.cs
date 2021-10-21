@@ -25,6 +25,9 @@ namespace PuppetMasterCLI
         private bool debug = false;
         private Process schedulerProcess;
 
+        private SchedulerService.SchedulerServiceClient schedulerServiceClient;
+        private GrpcChannel schedulerChannel;
+
         public PuppetMaster(List<string> pcsList)
         {
             foreach (string pcsURL in pcsList)
@@ -51,6 +54,9 @@ namespace PuppetMasterCLI
                 // Start the process with the info we specified.
                 // Call WaitForExit and then the using statement will close.
                 schedulerProcess = Process.Start(startInfo);
+                schedulerChannel = GrpcChannel.ForAddress(url);
+                schedulerServiceClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
+
             }
             catch (Exception e)
             {
@@ -86,12 +92,34 @@ namespace PuppetMasterCLI
             var pcsHost = url.Split("//")[1].Split(":")[0];
             pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay);
         }
-        public void ClientRequest(string inputAppFileName)
+
+        public void ClientRequest(string inputAppFileName, string input)
         {
-            // Fake a client request
-            // Parse the input AppFileName or let the Schedular do that ???
-            // Ask the schedular to manage the request
+            RunApplicationRequest request = new RunApplicationRequest {
+                Input = input
+            };
+
+           // Parse the input AppFileName
+            using (StreamReader reader = System.IO.File.OpenText(inputAppFileName))
+            {
+                string rline = String.Empty;
+                while ((rline = reader.ReadLine()) != null)
+                {
+                    string[] line = rline.Split(" ");
+                    request.Chain.Add(new DIDAOperatorID
+                    {
+                        Classname = line[1],
+                        Order = Int32.Parse(line[2])
+                    });
+                }
+            }
+            request.ChainSize = request.Chain.Count;
+
+            RunApplicationReply reply = schedulerServiceClient.RunApplication(request);
+
         }
+
+
         public void Populate(string dataFileName)
         {
             // Parse the file
