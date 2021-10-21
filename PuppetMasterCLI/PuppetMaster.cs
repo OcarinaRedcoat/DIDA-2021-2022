@@ -25,6 +25,9 @@ namespace PuppetMasterCLI
         private bool debug = false;
         private Process schedulerProcess;
 
+        private SchedulerService.SchedulerServiceClient schedulerServiceClient;
+        private GrpcChannel schedulerChannel;
+
         public PuppetMaster(List<string> pcsList)
         {
             foreach (string pcsURL in pcsList)
