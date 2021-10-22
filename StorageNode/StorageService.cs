@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace StorageNode
 {
-    class StorageNodeService : StorageService.StorageServiceBase
+    class StorageNodeService : DIDAStorageService.DIDAStorageServiceBase
     {
         StorageNodeLogic storageNodeLogic;
 
@@ -16,7 +16,7 @@ namespace StorageNode
             this.storageNodeLogic = logic;
         }
 
-        public ReadReply ReadSerialize(string id, DIDAVersion grpcVersionInput)
+        public DIDARecordReply ReadSerialize(string id, DIDAVersion grpcVersionInput)
         {
             // Serialize Input
             DIDAStorage.DIDAVersion version = new DIDAStorage.DIDAVersion
@@ -35,25 +35,20 @@ namespace StorageNode
                 VersionNumber = record.version.versionNumber
             };
 
-            DIDARecord grpcRecord = new DIDARecord
+            return new DIDARecordReply
             {
                 Id = record.id,
                 Version = grpcVersionOutput,
                 Val = record.val
             };
-
-            return new ReadReply
-            {
-                Record = grpcRecord
-            };
         }
 
-        public override Task<ReadReply> Read(ReadRequest request, ServerCallContext context)
+        public override Task<DIDARecordReply> read(DIDAReadRequest request, ServerCallContext context)
         {
             return Task.FromResult(ReadSerialize(request.Id, request.Version));
         }
 
-        public WriteReply WriteSerialize(string id, string value)
+        public DIDAVersion WriteSerialize(string id, string value)
         {
             // Serialize Input
 
@@ -62,28 +57,23 @@ namespace StorageNode
 
             // Serialize Output
 
-            DIDAVersion grpcVersionOutput = new DIDAVersion
+            return new DIDAVersion
             {
                 ReplicaId = version.replicaId,
                 VersionNumber = version.versionNumber
             };
-
-            return new WriteReply
-            {
-                Version = grpcVersionOutput
-            };
         }
 
-        public override Task<WriteReply> Write(WriteRequest request, ServerCallContext context)
+        public override Task<DIDAVersion> write(DIDAWriteRequest request, ServerCallContext context)
         {
             return Task.FromResult(WriteSerialize(request.Id, request.Val));
         }
 
-        public override Task<UpdateIfValueIsReply> UpdateIfValueIs(UpdateIfValueIsRequest request, ServerCallContext context)
+        public override Task<DIDAVersion> updateIfValueIs(DIDAUpdateIfRequest request, ServerCallContext context)
         {
             storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
             // TODO : implement
-            return base.UpdateIfValueIs(request, context);
+            return base.updateIfValueIs(request, context);
         }
     }
 
@@ -171,7 +161,7 @@ namespace StorageNode
             {
                 Services =
                 {
-                    StorageService.BindService(new StorageNodeService(ref logic)),
+                    DIDAStorageService.BindService(new StorageNodeService(ref logic)),
                     PMStorageService.BindService(new PuppetMasterStorageService(ref logic)),
                     StatusService.BindService(new StorageStatusService(ref logic))
                 } ,

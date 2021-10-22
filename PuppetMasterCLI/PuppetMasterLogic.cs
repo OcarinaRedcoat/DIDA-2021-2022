@@ -163,8 +163,7 @@ namespace PuppetMasterCLI
 
         public string[] ParsePopulateFile(string dataFileName)
         {
-            string[] lines = System.IO.File.ReadAllLines(dataFileName);
-            return lines;
+            return File.ReadAllLines(dataFileName);
         }
 
 
