@@ -202,11 +202,22 @@ namespace PuppetMasterCLI
 
             // Make a DumpRequest
             DumpRequest req = new DumpRequest { };
+            DumpReply reply;
+
             foreach (StorageNodeStruct node in storageNodes)
             {
                 if (node.serverId.Equals(serverId))
                 {
-                    DumpReply reply = node.storageClient.Dump(req);
+                    try
+                    {
+                        reply = node.storageClient.Dump(req);
+                    }
+                    catch (Exception e)
+                    {
+                        storageNodes.Remove(node);
+                        Console.WriteLine("Storage node (" + node.serverId + ") crashed!");
+                        return;
+                    }
 
                     Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
                     foreach (DIDARecord record in reply.Data)
@@ -235,6 +246,7 @@ namespace PuppetMasterCLI
                             res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
                         }
                     }
+
                     Console.WriteLine(res);
                     return;
                 }
@@ -243,13 +255,24 @@ namespace PuppetMasterCLI
         public void ListGlobal()
         {
             // Lists all objects stored on the system
+            List<StorageNodeStruct> crashedNodes = new List<StorageNodeStruct>();
 
             // For each StorageNode Client
             foreach (StorageNodeStruct node in storageNodes)
             {
                 // Make a DumpRequest
                 DumpRequest req = new DumpRequest { };
-                DumpReply reply = node.storageClient.Dump(req);
+                DumpReply reply;
+                try
+                {
+                    reply = node.storageClient.Dump(req);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Storage node (" + node.serverId + ") crashed!");
+                    crashedNodes.Add(node);
+                    continue;
+                }
 
                 Dictionary<string, List<DIDARecord>> data = new Dictionary<string, List<DIDARecord>>();
                 foreach (DIDARecord record in reply.Data)
@@ -278,7 +301,14 @@ namespace PuppetMasterCLI
                         res += "(" + record.Version.VersionNumber + ", " + record.Version.ReplicaId + ", " + record.Val + ")\r\n";
                     }
                 }
+
                 Console.WriteLine(res);
+            }
+
+            // Remove crashed nodes from List
+            foreach (StorageNodeStruct crashedNode in crashedNodes)
+            {
+                storageNodes.Remove(crashedNode);
             }
         }
         public void Debug()
