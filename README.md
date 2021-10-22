@@ -51,3 +51,9 @@ wait_interval 5000
 listGlobal
 status
 ```
+
+### Known PCS's: (pcs.txt)
+
+```
+http://localhost:10000
+```
