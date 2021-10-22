@@ -100,7 +100,7 @@ namespace WorkerNode
             try
             {
                 string _dllNameTermination = ".dll";
-                string _currWorkingDir = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Libs";
+                string _currWorkingDir = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Libs\\netcoreapp3.1\\";
 
                 foreach (string filename in Directory.EnumerateFiles(_currWorkingDir))
                 {
