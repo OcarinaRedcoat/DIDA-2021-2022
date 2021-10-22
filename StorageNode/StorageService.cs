@@ -9,11 +9,11 @@ namespace StorageNode
 {
     class StorageNodeService : StorageService.StorageServiceBase
     {
-        StorageNodeLogic snl;
+        StorageNodeLogic storageNodeLogic;
 
         public StorageNodeService(ref StorageNodeLogic logic) : base()
         {
-            this.snl = logic;
+            this.storageNodeLogic = logic;
         }
 
         public ReadReply ReadSerialize(string id, DIDAVersion grpcVersionInput)
@@ -22,13 +22,11 @@ namespace StorageNode
             DIDAStorage.DIDAVersion version = new DIDAStorage.DIDAVersion
             {
                 replicaId = grpcVersionInput.ReplicaId,
-
-                //replicaId = grpcVersionInput.ReplicaId,
-                //versionNumber = grpcVersionInput.VersionNumber
+                versionNumber = grpcVersionInput.VersionNumber
             };
             
             // Call logic operation
-            DIDAStorage.DIDARecord record = snl.Read(id, version);
+            DIDAStorage.DIDARecord record = storageNodeLogic.Read(id, version);
 
             // Serialize Output
             DIDAVersion grpcVersionOutput = new DIDAVersion
@@ -43,23 +41,24 @@ namespace StorageNode
                 Version = grpcVersionOutput,
                 Val = record.val
             };
+
             return new ReadReply
             {
                 Record = grpcRecord
             };
         }
+
         public override Task<ReadReply> Read(ReadRequest request, ServerCallContext context)
         {
             return Task.FromResult(ReadSerialize(request.Id, request.Version));
         }
-
 
         public WriteReply WriteSerialize(string id, string value)
         {
             // Serialize Input
 
             // Call logic operation
-            DIDAStorage.DIDAVersion version = snl.Write(id, value);
+            DIDAStorage.DIDAVersion version = storageNodeLogic.Write(id, value);
 
             // Serialize Output
 
@@ -82,7 +81,8 @@ namespace StorageNode
 
         public override Task<UpdateIfValueIsReply> UpdateIfValueIs(UpdateIfValueIsRequest request, ServerCallContext context)
         {
-            snl.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
+            storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
+            // TODO : implement
             return base.UpdateIfValueIs(request, context);
         }
     }
@@ -97,6 +97,7 @@ namespace StorageNode
             this.storageNode = logic;
 
         }
+
         public DumpReply DumpSerialize()
         {
             // Call logic operation
@@ -120,8 +121,6 @@ namespace StorageNode
                 });
             }
 
-
-
             return reply;
         }
 
@@ -138,15 +137,21 @@ namespace StorageNode
 
     class StorageStatusService : StatusService.StatusServiceBase
     {
-        private StorageNodeLogic snl;
+        private StorageNodeLogic storageNodeLogic;
+
         public StorageStatusService(ref StorageNodeLogic logic)
         {
-            this.snl = logic;
+            this.storageNodeLogic = logic;
         }
+
         public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
         {
-            return Task.FromResult(snl.Status());
+            return Task.FromResult(storageNodeLogic.Status());
         }
+    }
+
+    class GossipService
+    {
     }
 
     class StorageServer

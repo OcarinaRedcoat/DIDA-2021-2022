@@ -10,6 +10,8 @@ namespace StorageNode
 {
     class StorageNodeLogic : IDIDAStorage
     {
+        public static int MAX_VERSIONS_STORED = 5;
+
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
         private int replicaId;
@@ -22,43 +24,67 @@ namespace StorageNode
 
         public StatusReply Status()
         {
-            Console.WriteLine("This is my Status: " + replicaId);
-            foreach (KeyValuePair<string, List<DIDAStorage.DIDARecord>> pair in storage)
+            lock (storage)
             {
-                Console.WriteLine("Key: " + pair.Key);
-                foreach (DIDAStorage.DIDARecord rec in pair.Value)
+                Console.WriteLine("This is my Status: " + replicaId);
+
+                foreach (KeyValuePair<string, List<DIDAStorage.DIDARecord>> pair in storage)
                 {
-                    Console.WriteLine("Value: " + rec.val + ", Version: (" + rec.version.versionNumber + ", " + rec.version.replicaId + ")");
+                    Console.WriteLine("Key: " + pair.Key);
+                    foreach (DIDAStorage.DIDARecord rec in pair.Value)
+                    {
+                        Console.WriteLine("Value: " + rec.val + ", Version: (" + rec.version.versionNumber + ", " + rec.version.replicaId + ")");
+                    }
                 }
             }
+
             return new StatusReply { };
         }
 
         public DIDAStorage.DIDARecord Read(string id, DIDAStorage.DIDAVersion version)
         {
-            Console.WriteLine("Reading... " + id);
-            lock (this) {
-                List<DIDAStorage.DIDARecord> recordValues;
-                DIDAStorage.DIDARecord value;
+            List<DIDAStorage.DIDARecord> recordValues;
+            DIDAStorage.DIDARecord value = new DIDAStorage.DIDARecord
+            { // null value
+                id = id,
+                val = "",
+                version = new DIDAStorage.DIDAVersion
+                {
+                    replicaId = -1,
+                    versionNumber = -1
+                }
+            };
 
-                // Check if the version has -1 values
+            lock (storage) 
+            {
+                Console.WriteLine("Reading... " + id);
 
                 if (storage.TryGetValue(id, out recordValues))
                 {
-                    /*
-                    foreach (DIDAStorage.DIDARecord rec in recordValues)
-                    {
-                        // Get the most recent or the indicated version
+                    if (version.replicaId == -1 && version.versionNumber == -1)
+                    { // Null version
+                        int size = recordValues.Count;
+                        value = recordValues[size - 1];
+                        // We suppose the list is ordered
                     }
-                    */
-                    value = recordValues[0];
-                    return value;
-                } else
-                {
-                    // No value in this record
+                    else
+                    { // Specified version
+                        foreach (DIDAStorage.DIDARecord record in recordValues)
+                        {
+                            // Get the most recent or the indicated version
+                            if (
+                                record.version.replicaId == version.replicaId &&
+                                record.version.versionNumber == version.versionNumber)
+                            {
+                                value = record;
+                                break;
+                            }
+                        }
+                    }
                 }
-                throw new NotImplementedException();
             }
+
+            return value;
         }
 
         public DIDAStorage.DIDAVersion UpdateIfValueIs(string id, string oldvalue, string newvalue)
@@ -69,14 +95,24 @@ namespace StorageNode
         public DIDAStorage.DIDAVersion Write(string id, string val)
         {
             DIDAStorage.DIDAVersion didaVersion;
-            Console.WriteLine("Writing... " + id + " - " + val);
-            lock (this)
+            List<DIDAStorage.DIDARecord> recordValues;
+
+            lock (storage)
             {
+                Console.WriteLine("Writing... " + id + " - " + val);
+
                 // Get the greater version
+                int greaterVersionNumber = 0;
+                if (storage.TryGetValue(id, out recordValues))
+                {
+                    int size = recordValues.Count;
+                    greaterVersionNumber = recordValues[size - 1].version.versionNumber;
+                }
+
                 didaVersion = new DIDAStorage.DIDAVersion
                 {
-                    replicaId = replicaId,
-                    versionNumber = 1
+                    replicaId = this.replicaId,
+                    versionNumber = ++greaterVersionNumber
                 };
 
                 DIDAStorage.DIDARecord didaRecord = new DIDAStorage.DIDARecord
@@ -85,16 +121,24 @@ namespace StorageNode
                     version = didaVersion,
                     val = val
                 };
+
                 if (storage.ContainsKey(id))
                 {
-                    var l = storage[id];
-                    l.Add(didaRecord);
-                } else
+                    List<DIDAStorage.DIDARecord> items = storage[id];
+
+                    // If Queue is full
+                    if (items.Count == MAX_VERSIONS_STORED)
+                    {
+                        items.RemoveAt(0);
+                    }
+                    items.Add(didaRecord);
+                }
+                else
                 {
                     storage.Add(id, new List<DIDAStorage.DIDARecord>());
                     storage[id].Add(didaRecord);
                 }
-            };
+            }
 
             return didaVersion;
         }
@@ -122,19 +166,27 @@ namespace StorageNode
             return new PopulateReply { Okay = true };
         }
 
-        public PopulateReply Populate(RepeatedField<KeyValuePair> keyValuePairs) { return PopulateSerialize(keyValuePairs); }
+        public PopulateReply Populate(RepeatedField<KeyValuePair> keyValuePairs)
+        {
+            return PopulateSerialize(keyValuePairs);
+        }
 
         public List<DIDAStorage.DIDARecord> Dump()
         {
             List<DIDAStorage.DIDARecord> data = new List<DIDAStorage.DIDARecord>();
-            foreach (string key in storage.Keys)
+
+            lock (storage)
             {
-                var records = storage[key];
-                foreach (DIDAStorage.DIDARecord record in records)
+                foreach (string key in storage.Keys)
                 {
-                    data.Add(record);
+                    var records = storage[key];
+                    foreach (DIDAStorage.DIDARecord record in records)
+                    {
+                        data.Add(record);
+                    }
                 }
             }
+
             return data;
         }
     }
