@@ -45,6 +45,7 @@ namespace PCS
 
             try
             {
+                Console.WriteLine("Creating Storage...");
                 processes.TryAdd(serverId, Process.Start(startInfo));
             }
             catch (Exception e)
