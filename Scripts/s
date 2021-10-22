@@ -1,0 +1,6 @@
+debug
+scheduler sc1 http://localhost:4000 0
+storage s1 http://localhost:3000 0
+worker w1 http://localhost:3001 0
+worker w2 http://localhost:3002 0
+client 1 app1

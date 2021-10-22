@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
@@ -45,7 +46,8 @@ namespace PuppetMasterCLI
         static void ImportConfigFile(string fileName)
         {
             // Input file name. Then each line is parsed according to the specs.
-            string[] lines = System.IO.File.ReadAllLines(fileName);
+            string dirFileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Scripts\\" + fileName;
+            string[] lines = System.IO.File.ReadAllLines(dirFileName);
 
             foreach (string line in lines)
             {
@@ -58,7 +60,9 @@ namespace PuppetMasterCLI
         static void ImportFile(PuppetMasterLogic pm, string fileName)
         {
             // Input file name. Then each line is parsed according to the specs.
-            string[] lines = System.IO.File.ReadAllLines(fileName);
+            string dirFileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Scripts\\" + fileName;
+
+            string[] lines = System.IO.File.ReadAllLines(dirFileName);
         
             foreach (string line in lines)
             {

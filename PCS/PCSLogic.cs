@@ -43,6 +43,8 @@ namespace PCS
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
             startInfo.Arguments = serverId + " " + url + " " + gossipDelay + " " + replicaId;
 
+            Console.WriteLine("Recebeu Create Storage");
+
             try
             {
                 Console.WriteLine("Creating Storage...");

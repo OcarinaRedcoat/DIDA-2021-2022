@@ -112,7 +112,8 @@ namespace PuppetMasterCLI
             };
 
             // Parse the input AppFileName
-            using (StreamReader reader = System.IO.File.OpenText(inputAppFileName))
+            string dirFileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Scripts\\" + inputAppFileName;
+            using (StreamReader reader = System.IO.File.OpenText(dirFileName))
             {
                 string rline = String.Empty;
                 while ((rline = reader.ReadLine()) != null)
@@ -163,7 +164,8 @@ namespace PuppetMasterCLI
 
         public string[] ParsePopulateFile(string dataFileName)
         {
-            return File.ReadAllLines(dataFileName);
+            string dirFileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Scripts\\" + dataFileName;
+            return File.ReadAllLines(dirFileName);
         }
 
 

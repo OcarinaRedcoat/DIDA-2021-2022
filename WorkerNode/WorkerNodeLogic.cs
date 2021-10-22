@@ -100,7 +100,7 @@ namespace WorkerNode
             try
             {
                 string _dllNameTermination = ".dll";
-                string _currWorkingDir = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\WorkerNode\\Operators";
+                string _currWorkingDir = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\Libs";
 
                 foreach (string filename in Directory.EnumerateFiles(_currWorkingDir))
                 {
