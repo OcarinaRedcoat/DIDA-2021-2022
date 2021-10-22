@@ -11,11 +11,11 @@ namespace WorkerNode
     class WorkerNodeService : WorkerService.WorkerServiceBase
     {
 
-        WorkerNodeLogic wnl;
+        WorkerNodeLogic workerNodeLogic;
 
         public WorkerNodeService(ref WorkerNodeLogic wnl)
         {
-            this.wnl = wnl;
+            this.workerNodeLogic = wnl;
         }
 
         public ProcessOperatorReply ProcessOperatorSerialize(DIDAMetaRecord grpcMeta, string grpcInput, int grpcNext, int grpcChainSize, RepeatedField<DIDAAssignment> grpcChain)
@@ -56,15 +56,11 @@ namespace WorkerNode
                 chain = chain
             };
 
-
-            Console.WriteLine("Calling ProcessOperator Logic: ", req);
             // Call logic operation
-
-            req.chain[req.next].output = wnl.ProcessOperator(req);
+            req.chain[req.next].output = workerNodeLogic.ProcessOperator(req);
 
             req.next++;
 
-            Console.WriteLine("Next: " + req.next);
             foreach (DIDAWorker.DIDAAssignment ch in req.chain)
             {
                 Console.WriteLine("Chain Host: " + ch.host + " Port: " + ch.port + " Operator: " + ch.op.classname + " Output: " + ch.output);
@@ -73,16 +69,10 @@ namespace WorkerNode
             if (req.next < req.chainSize)
             {
                 string url = "http://" +  req.chain[req.next].host + ":" + req.chain[req.next].port;
-                Console.WriteLine("URL Next: " + url);
                 GrpcChannel channelAux = GrpcChannel.ForAddress(url);
-                Console.WriteLine("A");
                 var client = new WorkerService.WorkerServiceClient(channelAux);
-                Console.WriteLine("B");
-                Console.WriteLine(client.ToString());
                 ProcessOperatorRequest newReq = GenerateRequest(req);
-                Console.WriteLine("C");
-                Console.WriteLine(req.ToString());
-                client.ProcessOperatorAsync(newReq); //ASYNC
+                client.ProcessOperatorAsync(newReq);
             }
 
             // Serialize Output
@@ -136,16 +126,16 @@ namespace WorkerNode
     class WorkerStatusService : StatusService.StatusServiceBase
     {
 
-        WorkerNodeLogic wnl;
+        WorkerNodeLogic workerNodeLogic;
 
         public WorkerStatusService(ref WorkerNodeLogic wnl)
         {
-            this.wnl = wnl;
+            this.workerNodeLogic = wnl;
         }
 
         public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
         {
-            return Task.FromResult(wnl.Status());
+            return Task.FromResult(workerNodeLogic.Status());
         }
     }
 

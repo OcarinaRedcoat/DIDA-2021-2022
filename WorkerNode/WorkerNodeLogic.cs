@@ -32,6 +32,7 @@ namespace WorkerNode
         public StatusReply Status()
         {
             Console.WriteLine("This is my Status: " + workerId);
+            // TODO: More info
             return new StatusReply { };
         }
 
@@ -42,33 +43,36 @@ namespace WorkerNode
             {
                 string className = req.chain[req.next].op.classname;
 
-                // ASync ??
-                DIDAWorker.IDIDAOperator _op = extractOperator(className);
+                DIDAWorker.IDIDAOperator _op = ExtractOperator(className);
 
-                _op.ConfigureStorage(new DIDAStorageNode[] { new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" } }, MyLocationFunction);
-
-                Console.WriteLine("Input: " + req.input);
-
-                if (req.next == 0) {
-                    output = _op.ProcessRecord(req.meta, req.input, "");
-                }
-
-                else {
-                    output = _op.ProcessRecord(req.meta, req.input, req.chain[req.next - 1].output);
-
-                    if (debugMode)
+                _op.ConfigureStorage(
+                    new DIDAStorageNode[]
                     {
-                        logClient.Log(new LogRequest
-                        {
-                            WorkerId = workerId,
-                            Message = output
-                        });
-                    }
+                        new DIDAStorageNode
+                            {
+                                host = GetLocalIPAddress(),
+                                port = 3000,
+                                serverId = "s1"
+                            }
+                    },
+                    MyLocationFunction
+                );
+
+                string previouOutput = req.next == 0 ? "" : req.chain[req.next - 1].output;
+
+                output = _op.ProcessRecord(req.meta, req.input, previouOutput);
+
+                // TODO: If is the last operator from the chain ping scheduler
+
+                if (debugMode)
+                {
+                    logClient.Log(new LogRequest
+                    {
+                        WorkerId = workerId,
+                        Message = output
+                    });
                 }
-
-
-                Console.WriteLine("Finish: " + output);
-
+                Console.WriteLine("Output from Operator: " + output);
 
             }
             catch (Exception e)
@@ -81,18 +85,22 @@ namespace WorkerNode
 
         private static DIDAStorageNode MyLocationFunction(string id, OperationType type)
         {
+            // TODO: Implement
             // Hashing to choose Storage
-            return new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" };
+            return new DIDAStorageNode
+            {
+                host = GetLocalIPAddress(),
+                port = 3000,
+                serverId = "s1"
+            };
         }
 
-        private DIDAWorker.IDIDAOperator extractOperator(string className)
+        private DIDAWorker.IDIDAOperator ExtractOperator(string className)
         {
             try
             {
-
                 string _dllNameTermination = ".dll";
                 string _currWorkingDir = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\WorkerNode\\Operators";
-
 
                 foreach (string filename in Directory.EnumerateFiles(_currWorkingDir))
                 {
@@ -104,13 +112,11 @@ namespace WorkerNode
 
                         Type[] _typeList = _dll.GetTypes();
 
-                        Console.WriteLine(_typeList.Length);
                         foreach (Type type in _typeList)
                         {
-
                             if (type.Name == className)
                             {
-                                return (DIDAWorker.IDIDAOperator)Activator.CreateInstance(type);
+                                return (DIDAWorker.IDIDAOperator) Activator.CreateInstance(type);
                             }
                         }
                     }
