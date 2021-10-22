@@ -9,15 +9,15 @@ namespace Scheduler
 
     class SchService : SchedulerService.SchedulerServiceBase
     {
-        WorkerManager wm = new WorkerManager();
+        SchedulerLogic schedulerLogic = new SchedulerLogic();
         public override Task<AddWorkerNodeReply> AddWorkerNode(AddWorkerNodeRequest request, ServerCallContext context)
         {
-            return Task.FromResult(wm.AddWorker(request.ServerId, request.Url));
+            return Task.FromResult(schedulerLogic.AddWorker(request.ServerId, request.Url));
         }
 
         public override Task<RunApplicationReply> RunApplication(RunApplicationRequest request, ServerCallContext context)
         {
-            return Task.FromResult(wm.RunApplication(request.Chain, request.Input, request.ChainSize));
+            return Task.FromResult(schedulerLogic.RunApplication(request.Chain, request.Input, request.ChainSize));
         }
 
     }
