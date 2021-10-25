@@ -143,6 +143,11 @@ namespace StorageNode
             return didaVersion;
         }
 
+        internal GossipReply Gossip()
+        {
+            throw new NotImplementedException();
+        }
+
         public PopulateReply PopulateSerialize(RepeatedField<KeyValuePair> keyValuePairs)
         {
             foreach (KeyValuePair pair in keyValuePairs)

@@ -1,1 +1,21 @@
 syntax = "proto3";
+import "Struct.proto";
+
+service GossipService {
+	rpc Gossip(GossipRequest) returns (GossipReply) {}
+}
+
+message UpdateLog {
+	repeated int32 timestamp = 1;
+	DIDARecord record = 2;
+}
+
+message GossipRequest {
+	int32 replicId = 1;
+	repeated int32 replicaTimestamp = 2;
+	repeated UpdateLog updateLogs = 3;
+}
+
+message GossipReply {
+	// repeated int32 replicaTimestamp = 1;
+}

@@ -140,8 +140,19 @@ namespace StorageNode
         }
     }
 
-    class GossipService
+    class GossipGRPCService : GossipService.GossipServiceBase
     {
+        private StorageNodeLogic storageNodeLogic;
+
+        public GossipGRPCService(ref StorageNodeLogic logic)
+        {
+            this.storageNodeLogic = logic;
+        }
+
+        public override Task<GossipReply> Gossip(GossipRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(storageNodeLogic.Gossip());
+        }
     }
 
     class StorageServer
