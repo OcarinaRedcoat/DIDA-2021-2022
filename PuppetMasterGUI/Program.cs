@@ -17,7 +17,12 @@ namespace PuppetMasterGUI
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Form1 form = new Form1();
+            PuppetMasterLogic logic = new PuppetMasterLogic("pcs.txt", form);
+            form.SetLogic(logic);
+            Application.Run(form);
         }
+
+
     }
 }

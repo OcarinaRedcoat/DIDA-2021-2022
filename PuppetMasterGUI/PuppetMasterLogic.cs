@@ -9,12 +9,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace PuppetMasterCLI
+public delegate void DelAddMsg(string s);
+
+namespace PuppetMasterGUI
 {
     public class PuppetMasterLogic
     {
         // Init Log Server
-        private LogServer logServer = new LogServer();
+        private LogServer logServer;
 
         private static List<string> knownPCSs = new List<string>();
         private Dictionary<string, PCSManager> pcsManagers = new Dictionary<string, PCSManager>();
@@ -32,8 +34,13 @@ namespace PuppetMasterCLI
         private GrpcChannel schedulerChannel;
 
         private int replicaIdCounter;
-        public PuppetMasterLogic(string pcsConfigFileName)
+
+        private Form1 form;
+
+        public PuppetMasterLogic(string pcsConfigFileName, Form1 form)
         {
+            this.form = form;
+            logServer = new LogServer(ref this.form);
             ImportConfigFile(pcsConfigFileName);
             replicaIdCounter = 0;
             foreach (string pcsURL in knownPCSs)
@@ -185,6 +192,7 @@ namespace PuppetMasterCLI
                 catch (Exception e)
                 {
                     // TODO: Storage node down
+                    Console.WriteLine("Exception: " + e);
                 }
             }
 
@@ -241,7 +249,7 @@ namespace PuppetMasterCLI
                     // Print the results like:
                     // key    |   versions (versionNumber, ReplicaId, valueX)
                     // money  |   (1, 1, 1000) (2, 1, 2000)
-                    String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                    string res = "key      :   versions (versionNumber, ReplicaId, valueX)";
                     foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                     {
                         res += pair.Key + " : ";
@@ -252,7 +260,7 @@ namespace PuppetMasterCLI
                     }
 
                     Console.WriteLine(res);
-                    return;
+                    form.AddLog(res);
                 }
             }
         }
@@ -260,6 +268,7 @@ namespace PuppetMasterCLI
         {
             // Lists all objects stored on the system
             List<StorageNodeStruct> crashedNodes = new List<StorageNodeStruct>();
+            string res = "";
 
             // For each StorageNode Client
             foreach (StorageNodeStruct node in storageNodes)
@@ -296,7 +305,7 @@ namespace PuppetMasterCLI
                 // Print the results like:
                 // key    |   versions (versionNumber, ReplicaId, valueX)
                 // money  |   (1, 1, 1000) (2, 1, 2000)
-                String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                res = "key      :   versions (versionNumber, ReplicaId, valueX)";
                 foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                 {
                     res += pair.Key + " : ";
@@ -314,10 +323,12 @@ namespace PuppetMasterCLI
             {
                 storageNodes.Remove(crashedNode);
             }
+            form.AddLog(res);
         }
         public void Debug()
         {
             debug = true;
+            form.debugFlag = true;
         }
         public void Crash(string serverId)
         {

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+service PCSService {
+	rpc CreateWorkerNode(CreateWorkerNodeRequest) returns (CreateWorkerNodeReply) {}
+	rpc CreateStorageNode(CreateStorageNodeRequest) returns (CreateStorageNodeReply) {}
+	rpc NukeStorage(NukeRequest) returns (NukeReply) {}
+	rpc Nuke(NukeAllRequest) returns (NukeAllReply) {}
+}
+
+message CreateWorkerNodeRequest {
+	string serverId = 1;
+	string url = 2;
+	int32 gossipDelay = 3 ; // in milisseconds
+	bool debug = 4;
+	string logURL = 5;
+}
+
+message CreateWorkerNodeReply {
+	bool okay = 1;
+}
+
+message CreateStorageNodeRequest {
+	string serverId = 1;
+	string url = 2;
+	int32 gossipDelay = 3; // in milisseconds
+	int32 replicaId = 4;
+}
+
+message CreateStorageNodeReply {
+	bool okay = 1;
+}
+
+message NukeRequest{
+	string serverId = 1;
+}
+
+message NukeReply{
+	bool okay = 1;
+}
+
+message NukeAllRequest{}
+
+message NukeAllReply{}

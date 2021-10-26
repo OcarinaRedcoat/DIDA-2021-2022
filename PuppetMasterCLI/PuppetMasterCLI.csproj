@@ -21,10 +21,4 @@
 	
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="LibDIDAStorage">
-      <HintPath>..\Libs\LibDIDAStorage.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

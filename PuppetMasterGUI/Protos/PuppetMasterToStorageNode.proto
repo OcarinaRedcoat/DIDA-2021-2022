@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+service PMStorageService { // In order to populate and dump data to a Storage Node
+	rpc Populate(PopulateRequest) returns (PopulateReply) {}
+	rpc Dump(DumpRequest) returns (DumpReply) {}
+}
+
+message PopulateRequest {
+	repeated KeyValuePair data = 1;
+}
+
+message KeyValuePair {
+	string key = 1;
+	string value = 2;
+}
+
+message PopulateReply {
+	bool okay = 1;
+}
+
+message DIDAVersion {
+	int32 versionNumber = 1;
+	int32 replicaId = 2;
+}
+
+message DIDARecord {
+	string id = 1;
+	DIDAVersion version = 2;
+	string val = 3;
+}
+
+message DumpRequest {}
+
+message DumpReply {
+	repeated DIDARecord data = 1;
+}
