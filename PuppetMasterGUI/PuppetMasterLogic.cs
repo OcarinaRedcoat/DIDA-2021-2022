@@ -52,7 +52,7 @@ namespace PuppetMasterGUI
 
         public void CreateScheduler(string serverId, string url)
         {
-            Console.WriteLine("Create Schedular: ", serverId, url);
+            Console.WriteLine("Create Scheduler: ", serverId, url);
             // Init the Schedular in a new process
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
@@ -68,6 +68,11 @@ namespace PuppetMasterGUI
                 schedulerProcess = Process.Start(startInfo);
                 schedulerChannel = GrpcChannel.ForAddress(url);
                 schedulerServiceClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
+
+                foreach (PCSManager pcsManager in pcsManagers.Values)
+                {
+                    pcsManager.SetScheduler(url);
+                }
             }
             catch (Exception e)
             {

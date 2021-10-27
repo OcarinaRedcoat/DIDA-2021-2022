@@ -13,9 +13,10 @@ namespace PuppetMasterCLI
     {
 
         private string url;
-        private SchedulerService.SchedulerServiceClient schClient;
-
         private PCSService.PCSServiceClient client;
+
+        private string schedulerUrl;
+        private SchedulerService.SchedulerServiceClient schClient;
 
         public PCSManager(string url)
         {
@@ -26,6 +27,13 @@ namespace PuppetMasterCLI
 
 
             GrpcChannel channelScheduler = GrpcChannel.ForAddress("http://" + GetLocalIPAddress() + ":4000");
+            schClient = new SchedulerService.SchedulerServiceClient(channelScheduler);
+        }
+
+        public void SetScheduler(string schedulerUrl)
+        {
+            this.schedulerUrl = schedulerUrl;
+            GrpcChannel channelScheduler = GrpcChannel.ForAddress(schedulerUrl);
             schClient = new SchedulerService.SchedulerServiceClient(channelScheduler);
         }
 

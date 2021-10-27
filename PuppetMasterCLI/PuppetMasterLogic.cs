@@ -61,6 +61,11 @@ namespace PuppetMasterCLI
                 schedulerProcess = Process.Start(startInfo);
                 schedulerChannel = GrpcChannel.ForAddress(url);
                 schedulerServiceClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
+
+                foreach (PCSManager pcsManager in pcsManagers.Values)
+                {
+                    pcsManager.SetScheduler(url);
+                }
             }
             catch (Exception e)
             {
