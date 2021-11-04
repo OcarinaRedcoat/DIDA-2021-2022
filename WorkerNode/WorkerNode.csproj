@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Protos\DIDAStorage.proto" />
     <None Remove="Protos\WorkerNodeToPuppetMaster.proto" />
   </ItemGroup>
 
@@ -17,6 +18,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+      <Protobuf Include="Protos\DIDAStorage.proto" GrpcServices="Client" />
 	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Client" />
 	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Client Server" />
 	  <Protobuf Include="Protos\Status.proto" GrpcServices="Server" />

@@ -48,17 +48,13 @@ namespace WorkerNode
 
                 DIDAWorker.IDIDAOperator _op = ExtractOperator(className);
 
-                _op.ConfigureStorage(
-                    new DIDAStorageNode[]
-                    {
-                        new DIDAStorageNode
-                            {
-                                host = GetLocalIPAddress(),
-                                port = 3000,
-                                serverId = "s1"
-                            }
+                DIDAMetaRecord meta = new DIDAMetaRecord { Id = req.meta.Id };
+
+                _op.ConfigureStorage(new StorageProxy(
+                    new DIDAStorageNode[] {
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" } 
                     },
-                    MyLocationFunction
+                    meta)
                 );
 
                 string previouOutput = req.next == 0 ? "" : req.chain[req.next - 1].output;
@@ -84,18 +80,6 @@ namespace WorkerNode
                 // TODO: handle this case, warn PuppetMaster
             }
             return output;
-        }
-
-        private static DIDAStorageNode MyLocationFunction(string id, OperationType type)
-        {
-            // TODO: Implement
-            // Hashing to choose Storage
-            return new DIDAStorageNode
-            {
-                host = GetLocalIPAddress(),
-                port = 3000,
-                serverId = "s1"
-            };
         }
 
         private DIDAWorker.IDIDAOperator ExtractOperator(string className)

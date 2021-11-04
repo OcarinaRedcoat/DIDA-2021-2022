@@ -23,7 +23,7 @@ namespace WorkerNode
             // Serialize Input
             DIDAWorker.DIDAMetaRecord meta = new DIDAWorker.DIDAMetaRecord
             {
-                id = grpcMeta.Id
+                Id = grpcMeta.Id
             };
 
             DIDAWorker.DIDAAssignment[] chain = new DIDAWorker.DIDAAssignment[grpcChainSize];
@@ -86,7 +86,7 @@ namespace WorkerNode
         {
             DIDAMetaRecord metaRecord = new DIDAMetaRecord
             {
-                Id = req.meta.id
+                Id = req.meta.Id
             };
 
             ProcessOperatorRequest newReq = new ProcessOperatorRequest

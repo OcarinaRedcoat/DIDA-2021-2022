@@ -6,6 +6,7 @@ using Grpc.Net.Client;
 
 namespace Operator
 {
+    /*
     public class CounterOperator : IDIDAOperator
     {
         Dictionary<string, DIDAStorageService.DIDAStorageServiceClient> _storageServers =
@@ -52,4 +53,5 @@ namespace Operator
             }
         }
     }
+    */
 }
