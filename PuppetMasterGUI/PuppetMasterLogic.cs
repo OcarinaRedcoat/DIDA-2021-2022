@@ -118,6 +118,24 @@ namespace PuppetMasterGUI
             node.statusClient = new StatusService.StatusServiceClient(node.channel);
 
             workerNodes.Add(node);
+
+            SetupStorage.SetupStorageClient setupClient = new SetupStorage.SetupStorageClient(node.channel);
+
+
+            SetupRequest setupRequest = new SetupRequest { };
+            foreach (StorageNodeStruct sns in storageNodes) {
+                setupRequest.Storages.Add(new StorageInfo
+                {
+                    Id = sns.serverId,
+                    Url = sns.url
+                });
+            }
+
+            SetupReply setupReply = setupClient.Setup(setupRequest);
+            if (!setupReply.Okay)
+            {
+                Console.WriteLine("Error setting up the storages in worker node: " + serverId);
+            }
         }
 
         public void ClientRequest(string inputAppFileName, string input)

@@ -1,4 +1,5 @@
 ﻿using DIDAWorker;
+using Google.Protobuf.Collections;
 using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,13 @@ namespace WorkerNode
         private GrpcChannel logChannel;
         private LogServerService.LogServerServiceClient logClient;
         private string workerId;
+        private List<StorageNode> storagesNodes;
 
         public WorkerNodeLogic(string serverId, int gossipDelay, bool debug, string logURL)
         {
             debugMode = debug;
             workerId = serverId;
+            storagesNodes = new List<StorageNode>();
             if (debugMode)
             {
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -130,6 +133,23 @@ namespace WorkerNode
             throw new Exception("Type not found!");
         }
 
+        public SetupReply SetupStorage(RepeatedField<StorageInfo> storages)
+        {
+            foreach (StorageInfo s in storages)
+            {
+                storagesNodes.Add(new StorageNode
+                {
+                    serverId = s.Id,
+                    url = s.Url
+                });
+                Console.WriteLine("Receive new Storage " + s.Id);
+            }
+            return new SetupReply
+            {
+                Okay = true
+            };
+        }
+
         public static string GetLocalIPAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -143,5 +163,10 @@ namespace WorkerNode
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
 
+        public struct StorageNode
+        {
+            public string serverId;
+            public string url;
+        }
     }
 }

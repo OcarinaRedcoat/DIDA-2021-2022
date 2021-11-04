@@ -20,6 +20,7 @@
 	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Client" />
 	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Client Server" />
 	  <Protobuf Include="Protos\Status.proto" GrpcServices="Server" />
+	  <Protobuf Include="Protos\SetupWorkerStorages.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>

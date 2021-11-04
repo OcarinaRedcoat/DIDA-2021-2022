@@ -1,0 +1,18 @@
+﻿syntax = "proto3";
+
+service SetupStorage {
+	rpc Setup(SetupRequest) returns (SetupReply) {}
+}
+
+message StorageInfo {
+	string id = 1;
+	string url = 2;
+}
+
+message SetupRequest {
+	repeated StorageInfo storages = 1;
+}
+
+message SetupReply {
+	bool okay = 1;
+}

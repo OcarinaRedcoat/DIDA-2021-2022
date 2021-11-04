@@ -44,7 +44,6 @@ namespace DIDAWorker {
 		public string classname;
 		public int order;
 	}
-	*/
 	public struct DIDARecord
 	{
 		public string id;
@@ -58,4 +57,5 @@ namespace DIDAWorker {
 		public int replicaId;
 	}
 	
+	*/
 }

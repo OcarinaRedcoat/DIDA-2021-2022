@@ -139,6 +139,21 @@ namespace WorkerNode
         }
     }
 
+    class SetupStoragesService : SetupStorage.SetupStorageBase
+    {
+        WorkerNodeLogic workerNodeLogic;
+
+        public SetupStoragesService(ref WorkerNodeLogic wnl)
+        {
+            this.workerNodeLogic = wnl;
+        }
+
+        public override Task<SetupReply> Setup(SetupRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(workerNodeLogic.SetupStorage(request.Storages));
+        }
+    }
+
     class WorkerServer
     {
         private int port;
@@ -157,7 +172,8 @@ namespace WorkerNode
                 Services =
                 {
                     WorkerService.BindService(new WorkerNodeService(ref wnl)),
-                    StatusService.BindService(new WorkerStatusService(ref wnl))
+                    StatusService.BindService(new WorkerStatusService(ref wnl)),
+                    SetupStorage.BindService(new SetupStoragesService(ref wnl))
                 },
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
