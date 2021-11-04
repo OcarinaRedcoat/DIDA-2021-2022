@@ -101,7 +101,34 @@ namespace PuppetMasterGUI
             node.storageClient = new PMStorageService.PMStorageServiceClient(node.channel);
             node.statusClient = new StatusService.StatusServiceClient(node.channel);
 
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                AddStorageRequest newStorageRequest = new AddStorageRequest { };
+                StorageInfo storageInfo = new StorageInfo {
+                    Id = node.serverId,
+                    Url = node.url
+                };
+                newStorageRequest.Storages.Add(storageInfo);
+                sns.storageClient.AddStorage(newStorageRequest);
+            }
+
+            AddStorageRequest storagesRequest = new AddStorageRequest { };
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                StorageInfo storageInfo = new StorageInfo
+                {
+                    Id = sns.serverId,
+                    Url = sns.url
+                };
+                storagesRequest.Storages.Add(storageInfo);
+
+            }
+
+            node.storageClient.AddStorage(storagesRequest);
+
             storageNodes.Add(node);
+
+
 
             replicaIdCounter++;
         }

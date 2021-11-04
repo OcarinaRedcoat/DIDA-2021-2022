@@ -123,6 +123,11 @@ namespace StorageNode
         {
             return Task.FromResult(storageNode.Populate(request.Data));
         }
+
+        public override Task<AddStorageReply> AddStorage(AddStorageRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(storageNode.AddStorage(request.Storages));
+        }
     }
 
     class StorageStatusService : StatusService.StatusServiceBase

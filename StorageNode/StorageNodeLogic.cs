@@ -1,6 +1,7 @@
 ﻿using DIDAStorage;
 using Google.Protobuf.Collections;
 using Grpc.Core;
+using Grpc.Net.Client;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,6 +12,8 @@ namespace StorageNode
     class StorageNodeLogic : IDIDAStorage
     {
         public static int MAX_VERSIONS_STORED = 5;
+
+        private Dictionary<string, StorageNodeStruct> storageNodes = new Dictionary<string, StorageNodeStruct>();
 
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
@@ -194,5 +197,29 @@ namespace StorageNode
 
             return data;
         }
+
+        public AddStorageReply AddStorage(RepeatedField<StorageInfo> storageInfos)
+        {
+
+            foreach (StorageInfo si in storageInfos)
+            {
+                StorageNodeStruct node;
+                node.serverId = si.ServerId;
+                node.url = si.Url;
+                node.channel = GrpcChannel.ForAddress(node.url);
+                // TODO: Adicionar o Service do GRPC para o GOSSIP
+
+                Console.WriteLine("Added Storage server Id: " + node.serverId);
+            }
+
+            return new AddStorageReply { Okay = true };
+        }
+    }
+    public struct StorageNodeStruct
+    {
+        public string serverId;
+        public string url;
+        public GrpcChannel channel;
+
     }
 }

@@ -1,12 +1,7 @@
 ﻿syntax = "proto3";
-
+import "Struct.proto";
 service SetupStorage {
 	rpc Setup(SetupRequest) returns (SetupReply) {}
-}
-
-message StorageInfo {
-	string id = 1;
-	string url = 2;
 }
 
 message SetupRequest {
