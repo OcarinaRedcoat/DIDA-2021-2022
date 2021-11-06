@@ -50,23 +50,88 @@ namespace WorkerNode
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
         {
-            // TODO: How to choose the storage function?
             List<string> storagesIds = _consistentHashing.ComputeSetOfReplicas(r.Id);
-            Console.WriteLine("Calling Read...");
+            DIDAStorageClient.DIDARecordReply res;
             foreach (string sId in storagesIds)
             {
-                Console.WriteLine("StorageId: " + sId);
+                try
+                {
+                    Console.WriteLine("Calling Read on... " + sId);
+                    res = _clients[sId].read(
+                        new DIDAStorageClient.DIDAReadRequest {
+                            Id = r.Id,
+                            Version = new DIDAStorageClient.DIDAVersion
+                            {
+                                VersionNumber = r.Version.VersionNumber,
+                                ReplicaId = r.Version.ReplicaId
+                            }
+                        }
+                    );
+                    // If the replica does not have the version required, try another one!
+                    if (res.Version.ReplicaId.Equals(-1) && res.Version.VersionNumber.Equals(-1))
+                    {
+                        Console.WriteLine("Replica does not have the version required...");
+                        continue;
+                    }
+                    Console.WriteLine("Read Succeed: " + sId);
+                    return new DIDAWorker.DIDARecordReply
+                    {
+                        Id = res.Id,
+                        Val = res.Val,
+                        Version = new DIDAWorker.DIDAVersion
+                        {
+                            VersionNumber = res.Version.VersionNumber,
+                            ReplicaId = res.Version.ReplicaId
+                        }
+                    };
+                }
+                catch (Exception e)
+                {
+                    // Replica down
+                    // TODO: Remove the replica!!!
+                    Console.WriteLine("Read Failed: " + sId);
+                    Console.WriteLine(e.Message);
+                }
             }
-            var res = _clients["s1"].read(new DIDAStorageClient.DIDAReadRequest { Id = r.Id, Version = new DIDAStorageClient.DIDAVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
-            return new DIDAWorker.DIDARecordReply { Id = "1", Val = "1", Version = { VersionNumber = 1, ReplicaId = 1 } };
+            // res = _clients["s1"].read(new DIDAStorageClient.DIDAReadRequest { Id = r.Id, Version = new DIDAStorageClient.DIDAVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
+            return new DIDAWorker.DIDARecordReply { Id = "1", Val = "1", Version = { VersionNumber = -1, ReplicaId = -1 } };
         }
 
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
-            // TODO: How to choose the storage function?
-            var res = _clients["s1"].write(new DIDAStorageClient.DIDAWriteRequest { Id = r.Id, Val = r.Val });
-            return new DIDAWorker.DIDAVersion { VersionNumber = res.VersionNumber, ReplicaId = res.ReplicaId };
+            List<string> storagesIds = _consistentHashing.ComputeSetOfReplicas(r.Id);
+            DIDAStorageClient.DIDAVersion res;
+            foreach (string sId in storagesIds)
+            {
+                try
+                {
+                    Console.WriteLine("Calling Write on... " + sId);
+                    res = _clients["s1"].write(
+                        new DIDAStorageClient.DIDAWriteRequest
+                        {
+                            Id = r.Id,
+                            Val = r.Val
+                        }
+                    );
+                    Console.WriteLine("Write Succeed: " + sId);
+                    return new DIDAWorker.DIDAVersion
+                    {
+                        VersionNumber = res.VersionNumber,
+                        ReplicaId = res.ReplicaId
+                    };
+                }
+                catch (Exception e)
+                {
+                    // Replica down
+                    // TODO: Remove the replica!!!
+                    Console.WriteLine("Write Failed: " + sId);
+                    Console.WriteLine(e.Message);
+                }
+            }
+            // var res = _clients["s1"].write(new DIDAStorageClient.DIDAWriteRequest { Id = r.Id, Val = r.Val });
+            // return new DIDAWorker.DIDAVersion { VersionNumber = res.VersionNumber, ReplicaId = res.ReplicaId };
+            return new DIDAWorker.DIDAVersion { VersionNumber = -1, ReplicaId = -1 };
         }
 
         // this dummy solution assumes there is a single storage server called "s1"
