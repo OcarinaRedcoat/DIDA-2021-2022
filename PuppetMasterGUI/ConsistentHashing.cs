@@ -56,6 +56,28 @@ namespace PuppetMasterGUI
             }
         }
 
+        public List<string> ComputeSetOfReplicas4Populate(string key)
+        {
+            int keyHash = KeyHash(key);
+            List<string> setOfReplicas = new List<string>();
+            bool found = false;
+
+            for (int i = 0; setOfReplicas.Count < replicationFactor; i = (i + 1) % storageHashIds.Count)
+            {
+                if (keyHash < storageHashIds[i].hashUpperBound && !found)
+                {
+                    setOfReplicas.Add(storageHashIds[i].serverId);
+                    found = true;
+                }
+                else if (found)
+                {
+                    setOfReplicas.Add(storageHashIds[i].serverId);
+                }
+            }
+
+            return setOfReplicas;
+        }
+
         public List<string> ComputeSetOfReplicas(string key)
         {
             int keyHash = KeyHash(key);

@@ -14,6 +14,7 @@ message PopulateRequest {
 message KeyValuePair {
 	string key = 1;
 	string value = 2;
+	int32 replicaId = 3;
 }
 
 message PopulateReply {

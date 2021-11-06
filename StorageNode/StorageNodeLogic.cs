@@ -156,7 +156,7 @@ namespace StorageNode
             foreach (KeyValuePair pair in keyValuePairs)
             {
                 DIDAStorage.DIDAVersion version;
-                version.replicaId = replicaId;
+                version.replicaId = pair.ReplicaId;
                 version.versionNumber = 1;
 
                 DIDAStorage.DIDARecord record;
