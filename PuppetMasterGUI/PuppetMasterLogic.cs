@@ -217,7 +217,18 @@ namespace PuppetMasterGUI
 
                 request.Data.Add(valuePair);
             }
-
+            /*
+             * 
+             * 
+             * 
+             * 
+             * FIXME: Ele esta a mandar o populate para o storage 1, temos de mandar as merdas consoante o consisten hasing e apos isso fazer um push gossip
+             * 
+             * 
+             * 
+             * 
+             * 
+             * */
             storageNodes[0].storageClient.Populate(request);
 
 
@@ -547,6 +558,7 @@ namespace PuppetMasterGUI
     public struct StorageNodeStruct
     {
         public string serverId;
+        //public int replicaId;
         public string url;
         public GrpcChannel channel;
         public PMStorageService.PMStorageServiceClient storageClient;
