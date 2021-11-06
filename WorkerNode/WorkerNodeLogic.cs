@@ -52,7 +52,15 @@ namespace WorkerNode
 
                 _op.ConfigureStorage(new StorageProxy(
                     new DIDAStorageNode[] {
-                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" } 
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3000, serverId = "s1" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3001, serverId = "1234567" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3002, serverId = "s3" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3003, serverId = "s4" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3004, serverId = "s5" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3005, serverId = "s6" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3006, serverId = "s7" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3007, serverId = "s8" },
+                        new DIDAStorageNode { host = GetLocalIPAddress(), port = 3008, serverId = "s9" }
                     },
                     meta)
                 );

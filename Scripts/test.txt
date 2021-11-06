@@ -1,9 +1,12 @@
 debug
+
 scheduler sc1 http://localhost:4000 0
+
 storage s1 http://localhost:3000 0
-storage s2 http://localhost:3003 0
-storage s3 http://localhost:3006 0
-storage s4 http://localhost:3007 0
-storage s5 http://localhost:3008 0
-storage s6 http://localhost:3009 0
-storage s7 http://localhost:3010 0
+
+worker w1 http://localhost:4001 0
+
+worker w2 http://localhost:4002 0
+wait 10000
+client 13 app2
+
