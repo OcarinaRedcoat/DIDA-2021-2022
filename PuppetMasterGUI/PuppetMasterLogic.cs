@@ -37,6 +37,7 @@ namespace PuppetMasterGUI
 
         private Form1 form;
 
+
         public PuppetMasterLogic(string pcsConfigFileName, Form1 form)
         {
             this.form = form;
@@ -100,6 +101,7 @@ namespace PuppetMasterGUI
             node.channel = GrpcChannel.ForAddress(url);
             node.storageClient = new PMStorageService.PMStorageServiceClient(node.channel);
             node.statusClient = new StatusService.StatusServiceClient(node.channel);
+            node.replicaId = replicaIdCounter;
 
             foreach (StorageNodeStruct sns in storageNodes)
             {
@@ -202,34 +204,58 @@ namespace PuppetMasterGUI
 
             var lines = ParsePopulateFile(dataFileName);
 
-            PopulateRequest request = new PopulateRequest();
+            List<string> storagesServerId = new List<string>();
+
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                storagesServerId.Add(sns.serverId);
+            }
+
+            ConsistentHashing consistentHasing = new ConsistentHashing(storagesServerId);
+
 
             foreach (string line in lines)
             {
                 var key = line.Split(",")[0];
                 var value = line.Split(",")[1];
 
+                PopulateRequest request = new PopulateRequest();
+
+                List<string> setOfReplicas = consistentHasing.ComputeSetOfReplicas4Populate(key);
+
+                string firstReplica = setOfReplicas[0];
+
+                int firstReplicaId = 0; // Checkar isto mas ira sempre existir
+
+                foreach(StorageNodeStruct sns in storageNodes)
+                {
+                    if (sns.serverId == firstReplica)
+                    {
+                        firstReplicaId = sns.replicaId;
+                    }
+                }
+
                 KeyValuePair valuePair = new KeyValuePair
                 {
                     Key = key,
-                    Value = value
+                    Value = value,
+                    ReplicaId = firstReplicaId
                 };
 
                 request.Data.Add(valuePair);
+
+                foreach (string replicaServerId in setOfReplicas)
+                {
+                    foreach(StorageNodeStruct sns in storageNodes)
+                    {
+                        if (replicaServerId == sns.serverId)
+                        {
+                            sns.storageClient.Populate(request);
+                            break;
+                        }
+                    }
+                }
             }
-            /*
-             * 
-             * 
-             * 
-             * 
-             * FIXME: Ele esta a mandar o populate para o storage 1, temos de mandar as merdas consoante o consisten hasing e apos isso fazer um push gossip
-             * 
-             * 
-             * 
-             * 
-             * 
-             * */
-            storageNodes[0].storageClient.Populate(request);
 
 
         }
@@ -558,7 +584,7 @@ namespace PuppetMasterGUI
     public struct StorageNodeStruct
     {
         public string serverId;
-        //public int replicaId;
+        public int replicaId;
         public string url;
         public GrpcChannel channel;
         public PMStorageService.PMStorageServiceClient storageClient;
