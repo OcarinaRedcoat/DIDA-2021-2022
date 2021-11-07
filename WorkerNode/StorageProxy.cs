@@ -51,6 +51,7 @@ namespace WorkerNode
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
         {
+            // TODO: META INFORMATION ABOUT VERSIONS READ AND WRITE
             List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
             DIDAStorageClient.DIDARecordReply res;
             foreach (string sId in storagesIds)

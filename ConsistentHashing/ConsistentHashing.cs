@@ -29,18 +29,6 @@ namespace CHashing
             }
 
             this.replicationFactor = ((storageKeys.Count / 2)) + 1;
-            Console.WriteLine("REPLICATION FACTOR: " + this.replicationFactor);
-
-            this.display();
-        }
-
-        public void display()
-        {
-            foreach (HashStorageNode node in storageHashIds)
-            {
-                Console.WriteLine("StorageId: " + node.serverId);
-                Console.WriteLine("StorageHash: " + node.hashUpperBound);
-            }
         }
 
         public int NodeHash(int idx)
@@ -84,24 +72,7 @@ namespace CHashing
 
         public List<string> ComputeShuffledSetOfReplicas(string key)
         {
-            int keyHash = KeyHash(key);
-            List<string> setOfReplicas = new List<string>();
-            bool found = false;
-
-            for (int i = 0; setOfReplicas.Count < replicationFactor; i = (i + 1) % storageHashIds.Count)
-            {
-                if (keyHash < storageHashIds[i].hashUpperBound && !found)
-                {
-                    setOfReplicas.Add(storageHashIds[i].serverId);
-                    found = true;
-                }
-                else if (found)
-                {
-                    setOfReplicas.Add(storageHashIds[i].serverId);
-                }
-            }
-
-            return Shuffle(setOfReplicas);
+            return Shuffle(ComputeSetOfReplicas(key));
         }
 
         public List<string> Shuffle(List<string> list)
