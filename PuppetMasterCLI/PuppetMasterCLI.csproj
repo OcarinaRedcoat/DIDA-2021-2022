@@ -13,6 +13,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <ProjectReference Include="..\ConsistentHashing\ConsistentHashing.csproj" />
 	<Protobuf Include="Protos\PuppetMasterToPCS.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\PuppetMasterToScheduler.proto" GrpcServices="Client" />
 	<Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" />

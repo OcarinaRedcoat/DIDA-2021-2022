@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace WorkerNode
+namespace CHashing
 {
-    class ConsistentHashing
+    public class ConsistentHashing
     {
 
         private int RING_SIZE = 256;
         private List<HashStorageNode> storageHashIds = new List<HashStorageNode>();
         private int numOfServers;
-        private int replicationFactor = 3;
+        private int replicationFactor;
         private Random rng = new Random();
 
         public ConsistentHashing(List<string> storageKeys)
@@ -27,6 +27,10 @@ namespace WorkerNode
                 });
                 storageIdx++;
             }
+
+            this.replicationFactor = ((storageKeys.Count / 2)) + 1;
+            Console.WriteLine("REPLICATION FACTOR: " + this.replicationFactor);
+
             this.display();
         }
 
@@ -57,6 +61,28 @@ namespace WorkerNode
         }
 
         public List<string> ComputeSetOfReplicas(string key)
+        {
+            int keyHash = KeyHash(key);
+            List<string> setOfReplicas = new List<string>();
+            bool found = false;
+
+            for (int i = 0; setOfReplicas.Count < replicationFactor; i = (i + 1) % storageHashIds.Count)
+            {
+                if (keyHash < storageHashIds[i].hashUpperBound && !found)
+                {
+                    setOfReplicas.Add(storageHashIds[i].serverId);
+                    found = true;
+                }
+                else if (found)
+                {
+                    setOfReplicas.Add(storageHashIds[i].serverId);
+                }
+            }
+
+            return setOfReplicas;
+        }
+
+        public List<string> ComputeShuffledSetOfReplicas(string key)
         {
             int keyHash = KeyHash(key);
             List<string> setOfReplicas = new List<string>();

@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsistentHashing", "ConsistentHashing\ConsistentHashing.csproj", "{BA4EF5BD-755E-4DFB-96A7-63046F226A39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{2C5362C5-777A-429B-A975-FD454F3F1434}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C5362C5-777A-429B-A975-FD454F3F1434}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C5362C5-777A-429B-A975-FD454F3F1434}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA4EF5BD-755E-4DFB-96A7-63046F226A39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA4EF5BD-755E-4DFB-96A7-63046F226A39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA4EF5BD-755E-4DFB-96A7-63046F226A39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA4EF5BD-755E-4DFB-96A7-63046F226A39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

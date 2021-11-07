@@ -14,13 +14,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+	  <ProjectReference Include="..\ConsistentHashing\ConsistentHashing.csproj" />
 
 	  <Protobuf Include="Protos\Struct.proto" />
 	  <Protobuf Include="Protos\PuppetMasterToPCS.proto" GrpcServices="Client" />
-	  <Protobuf Include="Protos\PuppetMasterToScheduler.proto" GrpcServices="Client"/>
-	  <Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" ProtoRoot="Protos\"/>
+	  <Protobuf Include="Protos\PuppetMasterToScheduler.proto" GrpcServices="Client" />
+	  <Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" ProtoRoot="Protos\" />
 	  <Protobuf Include="Protos\Status.proto" GrpcServices="Client" />
-	  <Protobuf Include="Protos\SetupWorkerStorages.proto" GrpcServices="Client" ProtoRoot="Protos\"/>
+	  <Protobuf Include="Protos\SetupWorkerStorages.proto" GrpcServices="Client" ProtoRoot="Protos\" />
 	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
 	  
   </ItemGroup>

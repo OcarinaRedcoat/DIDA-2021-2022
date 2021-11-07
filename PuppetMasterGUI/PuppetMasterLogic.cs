@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using CHashing;
 
 public delegate void DelAddMsg(string s);
 
@@ -221,7 +222,7 @@ namespace PuppetMasterGUI
 
                 PopulateRequest request = new PopulateRequest();
 
-                List<string> setOfReplicas = consistentHasing.ComputeSetOfReplicas4Populate(key);
+                List<string> setOfReplicas = consistentHasing.ComputeSetOfReplicas(key);
 
                 string firstReplica = setOfReplicas[0];
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using DIDAStorageClient;
 using DIDAWorker;
+using CHashing;
 
 namespace WorkerNode
 {
@@ -50,7 +51,7 @@ namespace WorkerNode
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
         {
-            List<string> storagesIds = _consistentHashing.ComputeSetOfReplicas(r.Id);
+            List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
             DIDAStorageClient.DIDARecordReply res;
             foreach (string sId in storagesIds)
             {
@@ -100,7 +101,7 @@ namespace WorkerNode
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
-            List<string> storagesIds = _consistentHashing.ComputeSetOfReplicas(r.Id);
+            List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
             DIDAStorageClient.DIDAVersion res;
             foreach (string sId in storagesIds)
             {

@@ -26,6 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="ConsistentHashing">
+      <HintPath>..\Libs\ConsistentHashing.dll</HintPath>
+    </Reference>
     <Reference Include="LibDIDAWorker">
       <HintPath>..\Libs\LibDIDAWorker.dll</HintPath>
     </Reference>
