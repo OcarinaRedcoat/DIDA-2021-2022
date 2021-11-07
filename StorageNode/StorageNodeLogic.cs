@@ -219,6 +219,7 @@ namespace StorageNode
     {
         public string serverId;
         public string url;
+        private int replicaId;
         public GrpcChannel channel;
 
     }
