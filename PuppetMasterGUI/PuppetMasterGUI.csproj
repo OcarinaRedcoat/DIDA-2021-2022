@@ -11,9 +11,9 @@
 	  <PackageReference Include="Grpc.Core" Version="2.32.0" />
 	  <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
 	  <PackageReference Include="Grpc.Tools" Version="2.32.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
 	  <ProjectReference Include="..\ConsistentHashing\ConsistentHashing.csproj" />
 
 	  <Protobuf Include="Protos\Struct.proto" />

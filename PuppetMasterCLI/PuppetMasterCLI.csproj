@@ -6,6 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Protos\PuppetMasterToPCS.proto" />
+    <None Remove="Protos\PuppetMasterToScheduler.proto" />
+    <None Remove="Protos\PuppetMasterToStorageNode.proto" />
+    <None Remove="Protos\SetupWorkerStorages.proto" />
+    <None Remove="Protos\Status.proto" />
+    <None Remove="Protos\Struct.proto" />
+    <None Remove="Protos\WorkerNodeToPuppetMaster.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
     <PackageReference Include="Grpc.Core" Version="2.32.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
@@ -14,11 +24,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\ConsistentHashing\ConsistentHashing.csproj" />
-	<Protobuf Include="Protos\PuppetMasterToPCS.proto" GrpcServices="Client" />
-	<Protobuf Include="Protos\PuppetMasterToScheduler.proto" GrpcServices="Client" />
-	<Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" />
-	<Protobuf Include="Protos\Status.proto" GrpcServices="Client" />
-	<Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
+
+	  <Protobuf Include="Protos\Struct.proto" />
+	  <Protobuf Include="Protos\PuppetMasterToPCS.proto" GrpcServices="Client" />
+	  <Protobuf Include="Protos\PuppetMasterToScheduler.proto" GrpcServices="Client" />
+	  <Protobuf Include="Protos\PuppetMasterToStorageNode.proto" GrpcServices="Client" ProtoRoot="Protos\" />
+	  <Protobuf Include="Protos\Status.proto" GrpcServices="Client" />
+	  <Protobuf Include="Protos\SetupWorkerStorages.proto" GrpcServices="Client" ProtoRoot="Protos\" />
+	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Server" />
 	
   </ItemGroup>
 

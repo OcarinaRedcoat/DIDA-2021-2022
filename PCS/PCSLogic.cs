@@ -11,14 +11,14 @@ namespace PCS
     {
         private ConcurrentDictionary<string, Process> processes  = new ConcurrentDictionary<string, Process>();
 
-        public CreateWorkerNodeReply CreateWorkerNode(string serverId, string url, int gossipDelay, bool debug, string logURL)
+        public CreateWorkerNodeReply CreateWorkerNode(string serverId, string url, int delay, bool debug, string logURL)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
             startInfo.UseShellExecute = true;
             startInfo.FileName = Directory.GetCurrentDirectory() + "\\..\\..\\..\\..\\WorkerNode\\bin\\Debug\\netcoreapp3.1\\WorkerNode.exe";
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
-            startInfo.Arguments = serverId + " " + url + " " + gossipDelay + " " + (debug ? "1" : "0") + " " + logURL;
+            startInfo.Arguments = serverId + " " + url + " " + delay + " " + (debug ? "1" : "0") + " " + logURL;
 
             try
             {

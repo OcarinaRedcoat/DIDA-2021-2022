@@ -94,16 +94,43 @@ namespace PuppetMasterCLI
             node.channel = GrpcChannel.ForAddress(url);
             node.storageClient = new PMStorageService.PMStorageServiceClient(node.channel);
             node.statusClient = new StatusService.StatusServiceClient(node.channel);
+            node.replicaId = replicaIdCounter;
+
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                AddStorageRequest newStorageRequest = new AddStorageRequest { };
+                StorageInfo storageInfo = new StorageInfo
+                {
+                    Id = node.serverId,
+                    Url = node.url
+                };
+                newStorageRequest.Storages.Add(storageInfo);
+                sns.storageClient.AddStorage(newStorageRequest);
+            }
+
+            AddStorageRequest storagesRequest = new AddStorageRequest { };
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                StorageInfo storageInfo = new StorageInfo
+                {
+                    Id = sns.serverId,
+                    Url = sns.url
+                };
+                storagesRequest.Storages.Add(storageInfo);
+
+            }
+
+            node.storageClient.AddStorage(storagesRequest);
 
             storageNodes.Add(node);
 
             replicaIdCounter++;
         }
-        public void CreateWorker(string serverId, string url, int gossipDelay)
+        public void CreateWorker(string serverId, string url, int delay)
         {
             var pcsHost = ExtractHostFromURL(url);
             Console.WriteLine("Create Worker: U: " + url + " - H: " + pcsHost);
-            pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay, debug, logServer.GetURL());
+            pcsManagers[pcsHost].createWorkerNode(serverId, url, delay, debug, logServer.GetURL());
 
             WorkerNodeStruct node;
             node.serverId = serverId;
@@ -112,6 +139,24 @@ namespace PuppetMasterCLI
             node.statusClient = new StatusService.StatusServiceClient(node.channel);
 
             workerNodes.Add(node);
+
+            SetupStorage.SetupStorageClient setupClient = new SetupStorage.SetupStorageClient(node.channel);
+
+            SetupRequest setupRequest = new SetupRequest { };
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                setupRequest.Storages.Add(new StorageInfo
+                {
+                    Id = sns.serverId,
+                    Url = sns.url
+                });
+            }
+
+            SetupReply setupReply = setupClient.Setup(setupRequest);
+            if (!setupReply.Okay)
+            {
+                Console.WriteLine("Error setting up the storages in worker node: " + serverId);
+            }
         }
 
         public void ClientRequest(string inputAppFileName, string input)
@@ -151,25 +196,58 @@ namespace PuppetMasterCLI
 
             var lines = ParsePopulateFile(dataFileName);
 
-            PopulateRequest request = new PopulateRequest();
+            List<string> storagesServerId = new List<string>();
+
+            foreach (StorageNodeStruct sns in storageNodes)
+            {
+                storagesServerId.Add(sns.serverId);
+            }
+
+            ConsistentHashing consistentHasing = new ConsistentHashing(storagesServerId);
+
 
             foreach (string line in lines)
             {
                 var key = line.Split(",")[0];
                 var value = line.Split(",")[1];
 
+                PopulateRequest request = new PopulateRequest();
+
+                List<string> setOfReplicas = consistentHasing.ComputeSetOfReplicas(key);
+
+                string firstReplica = setOfReplicas[0];
+
+                int firstReplicaId = 0; // Checkar isto mas ira sempre existir
+
+                foreach (StorageNodeStruct sns in storageNodes)
+                {
+                    if (sns.serverId == firstReplica)
+                    {
+                        firstReplicaId = sns.replicaId;
+                    }
+                }
+
                 KeyValuePair valuePair = new KeyValuePair
                 {
                     Key = key,
-                    Value = value
+                    Value = value,
+                    ReplicaId = firstReplicaId
                 };
 
                 request.Data.Add(valuePair);
+
+                foreach (string replicaServerId in setOfReplicas)
+                {
+                    foreach (StorageNodeStruct sns in storageNodes)
+                    {
+                        if (replicaServerId == sns.serverId)
+                        {
+                            sns.storageClient.Populate(request);
+                            break;
+                        }
+                    }
+                }
             }
-
-            storageNodes[0].storageClient.Populate(request);
-
-
         }
 
         public string[] ParsePopulateFile(string dataFileName)
@@ -191,6 +269,7 @@ namespace PuppetMasterCLI
                 catch (Exception e)
                 {
                     // TODO: Storage node down
+                    Console.WriteLine("Exception: " + e);
                 }
             }
 
@@ -341,7 +420,6 @@ namespace PuppetMasterCLI
                     return;
                 }
             }
-
         }
         public void Wait(int waitInterval)
         {
@@ -492,6 +570,7 @@ namespace PuppetMasterCLI
     public struct StorageNodeStruct
     {
         public string serverId;
+        public int replicaId;
         public string url;
         public GrpcChannel channel;
         public PMStorageService.PMStorageServiceClient storageClient;

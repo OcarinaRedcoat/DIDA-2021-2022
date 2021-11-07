@@ -1,8 +1,10 @@
 syntax = "proto3";
+import "Struct.proto";
 
 service PMStorageService { // In order to populate and dump data to a Storage Node
 	rpc Populate(PopulateRequest) returns (PopulateReply) {}
 	rpc Dump(DumpRequest) returns (DumpReply) {}
+	rpc AddStorage(AddStorageRequest) returns (AddStorageReply){}
 }
 
 message PopulateRequest {
@@ -12,6 +14,7 @@ message PopulateRequest {
 message KeyValuePair {
 	string key = 1;
 	string value = 2;
+	int32 replicaId = 3;
 }
 
 message PopulateReply {
@@ -33,4 +36,12 @@ message DumpRequest {}
 
 message DumpReply {
 	repeated DIDARecord data = 1;
+}
+
+message AddStorageRequest{
+	repeated StorageInfo storages = 1;
+}
+
+message AddStorageReply{
+	bool okay = 1;
 }

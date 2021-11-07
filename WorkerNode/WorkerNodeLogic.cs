@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace WorkerNode
 {
@@ -18,11 +19,13 @@ namespace WorkerNode
         private LogServerService.LogServerServiceClient logClient;
         private string workerId;
         private List<StorageNode> storagesNodes;
+        private int responseDelay;
 
-        public WorkerNodeLogic(string serverId, int gossipDelay, bool debug, string logURL)
+        public WorkerNodeLogic(string serverId, int delay, bool debug, string logURL)
         {
             debugMode = debug;
             workerId = serverId;
+            responseDelay = delay;
             storagesNodes = new List<StorageNode>();
             if (debugMode)
             {
@@ -42,6 +45,8 @@ namespace WorkerNode
         public string ProcessOperator(DIDARequest req)
         {
             string output = "";
+            // TODO: Ask prof about where to wait??
+            Thread.Sleep(responseDelay);
             try
             {
                 string className = req.chain[req.next].op.classname;

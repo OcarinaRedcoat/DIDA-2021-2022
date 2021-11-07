@@ -12,12 +12,12 @@ namespace WorkerNode
             string serverId = args[0];
             string host = ExtractHostFromArg(args[1]);
             int port = ExtractPortFromArg(args[1]);
-            int gossipDelay = Int32.Parse(args[2]);
+            int delay = Int32.Parse(args[2]);
             bool debug = Int32.Parse(args[3]).Equals(1);
             string logURL = args[4];
 
             if (debug) Console.WriteLine("Debug mode activated...");
-            WorkerNodeLogic workerNodeLogic = new WorkerNodeLogic(serverId, gossipDelay, debug, logURL);
+            WorkerNodeLogic workerNodeLogic = new WorkerNodeLogic(serverId, delay, debug, logURL);
             WorkerServer workerServer = new WorkerServer(serverId, host, port, ref workerNodeLogic);
 
             Console.ReadLine();

@@ -131,8 +131,6 @@ namespace PuppetMasterGUI
 
             storageNodes.Add(node);
 
-
-
             replicaIdCounter++;
         }
         public void CreateWorker(string serverId, string url, int gossipDelay)
@@ -150,7 +148,6 @@ namespace PuppetMasterGUI
             workerNodes.Add(node);
 
             SetupStorage.SetupStorageClient setupClient = new SetupStorage.SetupStorageClient(node.channel);
-
 
             SetupRequest setupRequest = new SetupRequest { };
             foreach (StorageNodeStruct sns in storageNodes) {
@@ -257,8 +254,6 @@ namespace PuppetMasterGUI
                     }
                 }
             }
-
-
         }
 
         public string[] ParsePopulateFile(string dataFileName)
@@ -434,7 +429,6 @@ namespace PuppetMasterGUI
                     return;
                 }
             }
-
         }
         public void Wait(int waitInterval)
         {

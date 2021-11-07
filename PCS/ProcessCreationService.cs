@@ -18,7 +18,7 @@ namespace PCS
         }
         public override Task<CreateWorkerNodeReply> CreateWorkerNode(CreateWorkerNodeRequest request, ServerCallContext context)
         {
-            return Task.FromResult(pcsLogic.CreateWorkerNode(request.ServerId, request.Url, request.GossipDelay, request.Debug, request.LogURL));
+            return Task.FromResult(pcsLogic.CreateWorkerNode(request.ServerId, request.Url, request.Delay, request.Debug, request.LogURL));
         }
 
         public override Task<CreateStorageNodeReply> CreateStorageNode(CreateStorageNodeRequest request, ServerCallContext context)
