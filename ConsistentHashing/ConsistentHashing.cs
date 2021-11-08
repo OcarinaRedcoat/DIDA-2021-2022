@@ -14,11 +14,11 @@ namespace CHashing
         private int replicationFactor;
         private Random rng = new Random();
 
-        public ConsistentHashing(List<string> storageKeys)
+        public ConsistentHashing(List<string> storageIds)
         {
-            numOfServers = storageKeys.Count;
+            numOfServers = storageIds.Count;
             int storageIdx = 1;
-            foreach (string key in storageKeys)
+            foreach (string key in storageIds)
             {
                 this.storageHashIds.Add(new HashStorageNode
                 {
@@ -28,7 +28,7 @@ namespace CHashing
                 storageIdx++;
             }
 
-            this.replicationFactor = ((storageKeys.Count / 2)) + 1;
+            this.replicationFactor = ((storageIds.Count / 2)) + 1;
         }
 
         public int NodeHash(int idx)

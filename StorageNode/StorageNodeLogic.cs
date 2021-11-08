@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Timers;
+using CHashing;
 
 namespace StorageNode
 {
@@ -19,19 +20,22 @@ namespace StorageNode
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
         private ReplicaManager replicaManager;
+        private string serverId;
         private int replicaId;
         private int gossipDelay;
         private Timer timer;
         private bool startedGossip = false;
-        public StorageNodeLogic(int replicaId, int gossipDelay)
+        public StorageNodeLogic(string serverId, int replicaId, int gossipDelay)
         {
+            this.serverId = serverId;
             this.replicaId = replicaId;
             this.gossipDelay = gossipDelay;
+            this.replicaManager = new ReplicaManager(this.replicaId, MAX_VERSIONS_STORED);
             this.timer = new Timer();
             timer.Interval = gossipDelay;
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             timer.AutoReset = true;
-            timer.Enabled = true;
+            timer.Enabled = false;
         }
 
         public StatusReply Status()
@@ -150,13 +154,14 @@ namespace StorageNode
                         items.RemoveAt(0);
                     }
                     items.Add(didaRecord);
-                    this.replicaManager.UpdateTimeStamp(this.replicaId, id, didaVersion);
+                    this.replicaManager.AddTimeStamp(this.replicaId, id, didaVersion);
                 }
                 else
                 {
                     storage.Add(id, new List<DIDAStorage.DIDARecord>());
                     storage[id].Add(didaRecord);
-                    this.replicaManager.AddNewKeyTimeStamp(
+                    this.replicaManager.CreateNewTimeStamp(
+                        this.replicaId,
                         id,
                         didaVersion
                     );
@@ -183,7 +188,8 @@ namespace StorageNode
                 listRecords.Add(record);
                 storage.Add(pair.Key, listRecords);
 
-                this.replicaManager.AddNewKeyTimeStamp(
+                this.replicaManager.CreateNewTimeStamp(
+                    this.replicaId,
                     pair.Key,
                     new DIDAStorage.DIDAVersion
                     {
@@ -224,7 +230,6 @@ namespace StorageNode
 
         public AddStorageReply AddStorage(RepeatedField<StorageInfo> storageInfos)
         {
-
             foreach (StorageInfo si in storageInfos)
             {
                 StorageNodeStruct node;
@@ -235,21 +240,11 @@ namespace StorageNode
                 node.gossipClient = new GossipService.GossipServiceClient(node.channel);
 
                 Console.WriteLine("Added Storage server Id: " + node.serverId);
+
+                this.replicaManager.AddStorageReplica(node.replicaId);
             }
 
-            SetupReplicaManager();
-
             return new AddStorageReply { Okay = true };
-        }
-
-        public void SetupReplicaManager()
-        {
-            List<StorageNodeStruct> storageNodesList = new List<StorageNodeStruct>();
-            foreach (StorageNodeStruct sns in this.storageNodes.Values)
-            {
-                storageNodesList.Add(sns);
-            } 
-            this.replicaManager = new ReplicaManager(this.replicaId, this.gossipDelay, storageNodesList);
         }
 
         private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
@@ -263,49 +258,68 @@ namespace StorageNode
             lock (this)
             {
                 List<string> keys = this.replicaManager.GetMyKeys();
-                Dictionary<string, DIDAStorage.DIDAVersion> myTimestamp = this.replicaManager.GetMyReplicaTimeStamp();
+                Dictionary<string, List<DIDAStorage.DIDAVersion>> myReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(this.replicaId);
                 Dictionary<string, GossipRequest> gossipRequests = new Dictionary<string, GossipRequest>();
-                Dictionary<string, DIDAStorage.DIDAVersion> myReplicaTS = this.replicaManager.GetMyReplicaTimeStamp();
+
+                List<string> storageIds = new List<string>();
+                foreach (StorageNodeStruct sns in storageNodes.Values)
+                {
+                    storageIds.Add(sns.serverId);
+                }
+                storageIds.Add(this.serverId);
 
                 foreach (string key in keys)
                 {
-                    List<string> setOfReplicas = this.replicaManager.ComputeSetOfReplicas(key);
+                    ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
+                    List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(key);
                     foreach (string serverId in setOfReplicas)
                     {
+                        // Dont gossip to ourselves
+                        if (serverId == this.serverId) continue;
+
                         if (!gossipRequests.ContainsKey(serverId))
                         {
                             gossipRequests.Add(serverId, new GossipRequest { ReplicaId = this.replicaId });
                         }
                         StorageNodeStruct sns = this.storageNodes[serverId];
-                        Dictionary<string, DIDAStorage.DIDAVersion> snsTimestamp = this.replicaManager.GetReplicaTimeStamp(sns.replicaId);
-                        if (this.replicaManager.VersionIsBiggerComparator(myTimestamp[key], snsTimestamp[key]))
+                        Dictionary<string, List<DIDAStorage.DIDAVersion>> snsReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(sns.replicaId);
+                        if (!snsReplicaTimestamp.ContainsKey(key))
                         {
-                            // TODO: Dont send everything
-                            foreach (DIDAStorage.DIDARecord record in this.storage[serverId])
+                            snsReplicaTimestamp.Add(key, new List<DIDAStorage.DIDAVersion>());
+                        }
+
+                        List<DIDAStorage.DIDAVersion> timestampsToSend = this.replicaManager.ComputeGossipTimestampsDifferences(myReplicaTimestamp[key], snsReplicaTimestamp[key]);
+
+                        foreach (DIDAStorage.DIDAVersion snsVersion in timestampsToSend)
+                        {
+                            foreach (DIDAStorage.DIDARecord record in this.storage[key])
                             {
-                                gossipRequests[serverId].UpdateLogs.Add(new DIDARecord
+                                if (record.version.versionNumber == snsVersion.versionNumber && record.version.replicaId == snsVersion.replicaId)
                                 {
-                                    Id = key,
-                                    Val = record.val,
-                                    Version = new DIDAVersion
+                                    gossipRequests[serverId].UpdateLogs.Add(new DIDARecord
                                     {
-                                        VersionNumber = record.version.versionNumber,
-                                        ReplicaId = record.version.replicaId
-                                    }
-                                });
+                                        Id = key,
+                                        Val = record.val,
+                                        Version = new DIDAVersion
+                                        {
+                                            VersionNumber = record.version.versionNumber,
+                                            ReplicaId = record.version.replicaId
+                                        }
+                                    });
+                                    break;
+                                }
                             }
                         }
 
-                        gossipRequests[serverId].ReplicaTimestamp.Add(new TimeStamp
-                        {
-                            Key = key,
-                            ReplicaTimestamp = new DIDAVersion
+                        var grpcTimestamp = new TimeStamp { Key = key };
+                        foreach (DIDAStorage.DIDAVersion version in myReplicaTimestamp[key]) {
+                            grpcTimestamp.Timestamp.Add(new DIDAVersion
                             {
-                                VersionNumber = myReplicaTS[key].versionNumber,
-                                ReplicaId = myReplicaTS[key].replicaId
-                            }
+                                VersionNumber = version.versionNumber,
+                                ReplicaId = version.replicaId
+                            });
                         }
-                        );
+                        gossipRequests[serverId].ReplicaTimestamp.Add(grpcTimestamp);
                     }
                 }
 
@@ -313,74 +327,75 @@ namespace StorageNode
                 {
                     GossipRequest request = gossipRequests[requestServerId];
                     GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
-                    this.replicaManager.UpdateReplicaTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
+                    this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
                 }
             }
         }
 
         public GossipReply ReceiveGossip(GossipRequest request)
         {
-            Dictionary<string, DIDAStorage.DIDAVersion> myReplicaTS;
+            Dictionary<string, List<DIDAStorage.DIDAVersion>> myReplicaTimestamp;
             lock (this)
             {
                 int otherReplicaId = request.ReplicaId;
-                myReplicaTS = this.replicaManager.GetMyReplicaTimeStamp();
+                myReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(this.replicaId);
 
-                List<DIDAStorage.DIDARecord> updateLogs = new List<DIDAStorage.DIDARecord>();
-
-                foreach (DIDARecord record in request.UpdateLogs)
+                foreach (DIDARecord update in request.UpdateLogs)
                 {
-                    updateLogs.Add(new DIDAStorage.DIDARecord
+                    DIDAStorage.DIDAVersion updateVersion = new DIDAStorage.DIDAVersion
                     {
-                        id = record.Id,
-                        val = record.Val,
-                        version = new DIDAStorage.DIDAVersion
-                        {
-                            versionNumber = record.Version.VersionNumber,
-                            replicaId = record.Version.ReplicaId
-                        }
-                    });
-                }
+                        versionNumber = update.Version.VersionNumber,
+                        replicaId = update.Version.ReplicaId
+                    };
 
-                foreach (DIDAStorage.DIDARecord update in updateLogs)
-                {
-                    if (!this.storage.ContainsKey(update.id))
+                    if (!this.storage.ContainsKey(update.Id))
                     {
-                        this.storage.Add(update.id, new List<DIDAStorage.DIDARecord>());
-                        this.replicaManager.AddNewKeyTimeStamp(update.id, new DIDAStorage.DIDAVersion { versionNumber = -1, replicaId = -1 });
+                        this.storage.Add(update.Id, new List<DIDAStorage.DIDARecord>());
+                        this.replicaManager.CreateNewTimeStamp(otherReplicaId, update.Id, new DIDAStorage.DIDAVersion { versionNumber = -1, replicaId = -1 });
                     }
 
-                    if (this.replicaManager.VersionIsBiggerComparator(update.version, myReplicaTS[update.id]))
+                    for (int i = 0; i < this.storage[update.Id].Count; i++)
                     {
-                        this.replicaManager.AddNewLog(update.id, update);
-                        if (this.storage[update.id].Count > MAX_VERSIONS_STORED)
+                        if (this.replicaManager.IsVersionBigger(updateVersion, this.storage[update.Id][i].version))
                         {
-                            this.storage[update.id].RemoveAt(0);
+                            DIDAStorage.DIDARecord newRecord = new DIDAStorage.DIDARecord
+                            {
+                                id = update.Id,
+                                version = updateVersion,
+                                val = update.Val
+                            };
+                            this.storage[update.Id].Insert(i, newRecord);
+                            if (this.storage[update.Id].Count > MAX_VERSIONS_STORED)
+                            {
+                                this.storage[update.Id].RemoveAt(0);
+                            }
+
+                            this.replicaManager.AddTimeStamp(replicaId, update.Id, updateVersion);
+
+                            break;
                         }
-                        this.storage[update.id].Add(update);
-                        this.replicaManager.UpdateTimeStamp(replicaId, update.id, this.storage[update.id][0].version);
                     }
                 }
 
                 // Update other Replica Timestamp
-                this.replicaManager.UpdateReplicaTimeStamp(otherReplicaId, request.ReplicaTimestamp);
+                this.replicaManager.ReplaceTimeStamp(otherReplicaId, request.ReplicaTimestamp);
 
-                myReplicaTS = this.replicaManager.GetMyReplicaTimeStamp();
+                myReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(this.replicaId);
             }
 
-            // TODO: Send only the needed keys
-            var reply =  new GossipReply {};
-            foreach (string key in myReplicaTS.Keys)
+            var reply = new GossipReply { };
+            foreach (string key in myReplicaTimestamp.Keys)
             {
-                reply.ReplicaTimestamp.Add(new TimeStamp
+                TimeStamp grpcTimestamp = new TimeStamp { Key = key };
+                foreach (DIDAStorage.DIDAVersion version in myReplicaTimestamp[key])
                 {
-                    Key = key,
-                    ReplicaTimestamp = new DIDAVersion
+                    grpcTimestamp.Timestamp.Add(new DIDAVersion
                     {
-                        VersionNumber = myReplicaTS[key].versionNumber,
-                        ReplicaId = myReplicaTS[key].replicaId
-                    }
-                });
+                        VersionNumber = version.versionNumber,
+                        ReplicaId = version.replicaId
+                    });
+                }
+                reply.ReplicaTimestamp.Add(grpcTimestamp);
             }
             
             return reply;

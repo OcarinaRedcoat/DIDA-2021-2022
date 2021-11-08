@@ -16,7 +16,7 @@ namespace StorageNode
             int replicaId = Int32.Parse(args[3]);
             Console.WriteLine("ReplicaID: " + replicaId);
 
-            var storageLogic = new StorageNodeLogic(replicaId, gossipDelay);
+            var storageLogic = new StorageNodeLogic(serverId, replicaId, gossipDelay);
             StorageServer storageServer = new StorageServer(serverId, host, port, ref storageLogic);
 
             Console.ReadLine();

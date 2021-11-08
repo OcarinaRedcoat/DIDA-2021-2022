@@ -7,7 +7,7 @@ service GossipService {
 
 message TimeStamp {
 	string key = 1;
-	DIDAVersion replicaTimestamp = 2;
+	repeated DIDAVersion timestamp = 2;
 }
 
 message GossipRequest {

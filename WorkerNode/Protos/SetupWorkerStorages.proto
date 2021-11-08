@@ -6,7 +6,8 @@ service SetupStorage {
 
 message StorageInfo {
 	string id = 1;
-	string url = 2;
+	int32 replicaId = 2;
+	string url = 3;
 }
 
 message SetupRequest {

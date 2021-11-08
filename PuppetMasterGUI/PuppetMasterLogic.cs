@@ -122,6 +122,7 @@ namespace PuppetMasterGUI
                 StorageInfo storageInfo = new StorageInfo
                 {
                     Id = sns.serverId,
+                    ReplicaId = sns.replicaId,
                     Url = sns.url
                 };
                 storagesRequest.Storages.Add(storageInfo);
@@ -155,6 +156,7 @@ namespace PuppetMasterGUI
                 setupRequest.Storages.Add(new StorageInfo
                 {
                     Id = sns.serverId,
+                    ReplicaId = sns.replicaId,
                     Url = sns.url
                 });
             }
