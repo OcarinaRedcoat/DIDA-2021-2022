@@ -4,6 +4,25 @@ using DIDAWorker;
 namespace DIDAOperator
 {
 
+    public class SimpleOperator : IDIDAOperator
+    {
+        IDIDAStorage _storageProxy;
+
+        // this operator increments the storage record identified in the metadata record every time it is called.
+        string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
+        {
+            _storageProxy.write(new DIDAWriteRequest { Id = input, Val = "2" });
+
+            Console.WriteLine("simple write record:" + input);
+            return "end";
+        }
+
+        void IDIDAOperator.ConfigureStorage(IDIDAStorage storageProxy)
+        {
+            _storageProxy = storageProxy;
+        }
+    }
+
     public class UpdateAndChainOperator : IDIDAOperator
     {
         IDIDAStorage _storageProxy;
