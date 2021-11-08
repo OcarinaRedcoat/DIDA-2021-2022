@@ -145,18 +145,18 @@ namespace StorageNode
         }
     }
 
-    class GossipGRPCService : GossipService.GossipServiceBase
+    class StorageGossipService : GossipService.GossipServiceBase
     {
         private StorageNodeLogic storageNodeLogic;
 
-        public GossipGRPCService(ref StorageNodeLogic logic)
+        public StorageGossipService(ref StorageNodeLogic logic)
         {
             this.storageNodeLogic = logic;
         }
 
         public override Task<GossipReply> Gossip(GossipRequest request, ServerCallContext context)
         {
-            return Task.FromResult(storageNodeLogic.Gossip());
+            return Task.FromResult(storageNodeLogic.ReceiveGossip(request));
         }
     }
 
@@ -179,7 +179,8 @@ namespace StorageNode
                 {
                     DIDAStorageService.BindService(new StorageNodeService(ref logic)),
                     PMStorageService.BindService(new PuppetMasterStorageService(ref logic)),
-                    StatusService.BindService(new StorageStatusService(ref logic))
+                    StatusService.BindService(new StorageStatusService(ref logic)),
+                    GossipService.BindService(new StorageGossipService(ref logic))
                 } ,
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };

@@ -17,6 +17,7 @@ namespace StorageNode
 
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
+        private ReplicaManager replicaManager;
         private int replicaId;
         private int gossipDelay;
         public StorageNodeLogic(int replicaId, int gossipDelay)
@@ -146,11 +147,6 @@ namespace StorageNode
             return didaVersion;
         }
 
-        internal GossipReply Gossip()
-        {
-            throw new NotImplementedException();
-        }
-
         public PopulateReply PopulateSerialize(RepeatedField<KeyValuePair> keyValuePairs)
         {
             foreach (KeyValuePair pair in keyValuePairs)
@@ -205,22 +201,160 @@ namespace StorageNode
             {
                 StorageNodeStruct node;
                 node.serverId = si.ServerId;
+                node.replicaId = si.ReplicaId;
                 node.url = si.Url;
                 node.channel = GrpcChannel.ForAddress(node.url);
-                // TODO: Adicionar o Service do GRPC para o GOSSIP
+                node.gossipClient = new GossipService.GossipServiceClient(node.channel);
 
                 Console.WriteLine("Added Storage server Id: " + node.serverId);
             }
 
+            SetupReplicaManager();
+
             return new AddStorageReply { Okay = true };
+        }
+
+        public void SetupReplicaManager()
+        {
+            List<StorageNodeStruct> storageNodesList = new List<StorageNodeStruct>();
+            foreach (StorageNodeStruct sns in this.storageNodes.Values)
+            {
+                storageNodesList.Add(sns);
+            } 
+            this.replicaManager = new ReplicaManager(this.replicaId, this.gossipDelay, storageNodesList);
+        }
+
+        public void Gossip()
+        {
+            List<string> keys = this.replicaManager.GetMyKeys();
+            Dictionary<string, DIDAStorage.DIDAVersion> myTimestamp = this.replicaManager.GetMyReplicaTimeStamp();
+            Dictionary<string, GossipRequest> gossipRequests = new Dictionary<string, GossipRequest>();
+            Dictionary<string, DIDAStorage.DIDAVersion> myReplicaTS = this.replicaManager.GetMyReplicaTimeStamp();
+
+            foreach (string key in keys)
+            {
+                List<string> setOfReplicas = this.replicaManager.ComputeSetOfReplicas(key);
+                foreach (string serverId in setOfReplicas)
+                {
+                    if (!gossipRequests.ContainsKey(serverId))
+                    {
+                        gossipRequests.Add(serverId, new GossipRequest { ReplicaId = this.replicaId });
+                    }
+                    StorageNodeStruct sns = this.storageNodes[serverId];
+                    Dictionary<string, DIDAStorage.DIDAVersion> snsTimestamp = this.replicaManager.GetReplicaTimeStamp(sns.replicaId);
+                    if (this.replicaManager.VersionIsBiggerComparator(myTimestamp[key], snsTimestamp[key]))
+                    {
+                        // TODO: Dont send everything
+                        foreach (DIDAStorage.DIDARecord record in this.storage[serverId])
+                        {
+                            gossipRequests[serverId].UpdateLogs.Add(new DIDARecord
+                            {
+                                Id = key,
+                                Val = record.val,
+                                Version = new DIDAVersion
+                                {
+                                    VersionNumber = record.version.versionNumber,
+                                    ReplicaId = record.version.replicaId
+                                }
+                            });
+                        }
+                    }
+
+                    gossipRequests[serverId].ReplicaTimestamp.Add(new TimeStamp
+                        {
+                            Key = key,
+                            ReplicaTimestamp = new DIDAVersion
+                            {
+                                VersionNumber = myReplicaTS[key].versionNumber,
+                                ReplicaId = myReplicaTS[key].replicaId
+                            }
+                        }
+                    );
+                }
+            }
+
+            foreach (string requestServerId in gossipRequests.Keys)
+            {
+                GossipRequest request = gossipRequests[requestServerId];
+                GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
+                this.replicaManager.UpdateReplicaTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
+            }
+        }
+
+        public GossipReply ReceiveGossip(GossipRequest request)
+        {
+            Dictionary<string, DIDAStorage.DIDAVersion> myReplicaTS;
+            lock (this)
+            {
+                int otherReplicaId = request.ReplicaId;
+                myReplicaTS = this.replicaManager.GetMyReplicaTimeStamp();
+
+                List<DIDAStorage.DIDARecord> updateLogs = new List<DIDAStorage.DIDARecord>();
+
+                foreach (DIDARecord record in request.UpdateLogs)
+                {
+                    updateLogs.Add(new DIDAStorage.DIDARecord
+                    {
+                        id = record.Id,
+                        val = record.Val,
+                        version = new DIDAStorage.DIDAVersion
+                        {
+                            versionNumber = record.Version.VersionNumber,
+                            replicaId = record.Version.ReplicaId
+                        }
+                    });
+                }
+
+                foreach (DIDAStorage.DIDARecord update in updateLogs)
+                {
+                    if (!this.storage.ContainsKey(update.id))
+                    {
+                        this.storage.Add(update.id, new List<DIDAStorage.DIDARecord>());
+                        this.replicaManager.AddNewKeyTimeStamp(update.id, new DIDAStorage.DIDAVersion { versionNumber = -1, replicaId = -1 });
+                    }
+
+                    if (this.replicaManager.VersionIsBiggerComparator(update.version, myReplicaTS[update.id]))
+                    {
+                        this.replicaManager.AddNewLog(update.id, update);
+                        if (this.storage[update.id].Count > MAX_VERSIONS_STORED)
+                        {
+                            this.storage[update.id].RemoveAt(0);
+                        }
+                        this.storage[update.id].Add(update);
+                        this.replicaManager.UpdateTimeStamp(replicaId, update.id, this.storage[update.id][0].version);
+                    }
+                }
+
+                // Update other Replica Timestamp
+                this.replicaManager.UpdateReplicaTimeStamp(otherReplicaId, request.ReplicaTimestamp);
+
+                myReplicaTS = this.replicaManager.GetMyReplicaTimeStamp();
+            }
+
+            // TODO: Send only the needed keys
+            var reply =  new GossipReply {};
+            foreach (string key in myReplicaTS.Keys)
+            {
+                reply.ReplicaTimestamp.Add(new TimeStamp
+                {
+                    Key = key,
+                    ReplicaTimestamp = new DIDAVersion
+                    {
+                        VersionNumber = myReplicaTS[key].versionNumber,
+                        ReplicaId = myReplicaTS[key].replicaId
+                    }
+                });
+            }
+            
+            return reply;
         }
     }
     public struct StorageNodeStruct
     {
         public string serverId;
         public string url;
-        private int replicaId;
+        public int replicaId;
         public GrpcChannel channel;
-
+        public GossipService.GossipServiceClient gossipClient;
     }
 }

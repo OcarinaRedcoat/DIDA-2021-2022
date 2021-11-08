@@ -6,10 +6,9 @@ namespace StorageNode
 {
     class TimeStampTable
     {
-
-        
+        // Last of the 5 Versions stored
+        private Dictionary<string, DIDAStorage.DIDAVersion> replicaTimestamp = new Dictionary<string, DIDAStorage.DIDAVersion>();
         private Dictionary<int, Dictionary<string, DIDAStorage.DIDAVersion>> timeStampTable = new Dictionary<int, Dictionary<string, DIDAStorage.DIDAVersion>>();
-        private Dictionary<string, List<DIDAStorage.DIDARecord>> updateLogs = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
         private int myReplicaId;
 
         public TimeStampTable(List<int> storagesReplicaId, int myReplicaId)
@@ -21,9 +20,19 @@ namespace StorageNode
             }
         }
 
+        public List<string> GetMyKeys()
+        {
+            List<string> myKeys = new List<string>();
+            foreach (string key in this.replicaTimestamp.Keys)
+            {
+                myKeys.Add(key);
+            }
+            return myKeys;
+        }
+
         public Dictionary<string, DIDAStorage.DIDAVersion> GetMyReplicaTimeStamp()
         {
-            return timeStampTable[myReplicaId];
+            return replicaTimestamp;
         }
 
         public Dictionary<string, DIDAStorage.DIDAVersion> GetReplicaTimeStamp(int replicaId)
@@ -33,32 +42,40 @@ namespace StorageNode
 
         public void SetNewKey(int replicaId, string key, DIDAStorage.DIDAVersion version)
         {
-            timeStampTable[replicaId].Add(key, version);
-
+            if (replicaId == this.myReplicaId)
+            {
+                replicaTimestamp.Add(key, version);
+            }
+            else
+            {
+                timeStampTable[replicaId].Add(key, version);
+            }
         }
 
         public void UpdateVersion(int replicaId, string key, DIDAStorage.DIDAVersion version)
         {
-            if (timeStampTable[replicaId].ContainsKey(key))
+            if (replicaId == this.myReplicaId)
             {
-                timeStampTable[replicaId][key] = version;
+                if (replicaTimestamp.ContainsKey(key))
+                {
+                    replicaTimestamp[key] = version;
+                }
+                else
+                {
+                    SetNewKey(replicaId, key, version);
+                }
             }
             else
             {
-                SetNewKey(replicaId, key, version);
+                if (timeStampTable[replicaId].ContainsKey(key))
+                {
+                    timeStampTable[replicaId][key] = version;
+                }
+                else
+                {
+                    SetNewKey(replicaId, key, version);
+                }
             }
-            
         }
-
-        public void AddNewLog(string key, DIDAStorage.DIDARecord newRecord) 
-        {
-            if (!updateLogs.ContainsKey(key))
-            {
-                updateLogs.Add(key, new List<DIDAStorage.DIDARecord>());
-            }
-            updateLogs[key].Add(newRecord);
-        }
-
-
     }
 }

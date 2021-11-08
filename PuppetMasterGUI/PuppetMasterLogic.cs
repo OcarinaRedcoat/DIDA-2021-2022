@@ -109,6 +109,7 @@ namespace PuppetMasterGUI
                 AddStorageRequest newStorageRequest = new AddStorageRequest { };
                 StorageInfo storageInfo = new StorageInfo {
                     Id = node.serverId,
+                    ReplicaId = node.replicaId,
                     Url = node.url
                 };
                 newStorageRequest.Storages.Add(storageInfo);
