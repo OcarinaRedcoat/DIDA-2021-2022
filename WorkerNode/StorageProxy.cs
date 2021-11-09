@@ -124,7 +124,7 @@ namespace WorkerNode
                 {
                     // Replica down
                     // TODO: Remove the replica!!!
-                    Console.WriteLine("Read Failed: " + sId);
+                    Console.WriteLine("Read Failed to Replica: " + sId);
                     Console.WriteLine(e.Message);
                 }
             }
@@ -181,7 +181,7 @@ namespace WorkerNode
                 {
                     // Replica down
                     // TODO: Remove the replica!!!
-                    Console.WriteLine("Write Failed: " + sId);
+                    Console.WriteLine("Write Failed to Replica: " + sId);
                     Console.WriteLine(e.Message);
                 }
             }
@@ -193,9 +193,41 @@ namespace WorkerNode
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion updateIfValueIs(DIDAWorker.DIDAUpdateIfRequest r)
         {
-            // TODO: How to choose the storage function?
-            var res = _clients["s1"].updateIfValueIs(new DIDAStorageClient.DIDAUpdateIfRequest { Id = r.Id, Newvalue = r.Newvalue, Oldvalue = r.Oldvalue });
-            return new DIDAWorker.DIDAVersion { VersionNumber = res.VersionNumber, ReplicaId = res.ReplicaId };
+            List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
+
+            foreach (string sId in storagesIds)
+            {
+                try
+                {
+                    Console.WriteLine("Calling UpdateIfValueIs on... " + sId);
+                    DIDAStorageClient.DIDAVersion res = _clients[sId].updateIfValueIs(
+                        new DIDAStorageClient.DIDAUpdateIfRequest
+                        {
+                            Id = r.Id,
+                            Newvalue = r.Newvalue,
+                            Oldvalue = r.Oldvalue
+                        }
+                    );
+
+                    // TODO: TIMEOUT in GRPC setting????
+
+                    Console.WriteLine("UpdateIfValueIs Succeed: " + sId);
+                    return new DIDAWorker.DIDAVersion
+                    {
+                        VersionNumber = res.VersionNumber,
+                        ReplicaId = res.ReplicaId
+                    };
+                } catch (Exception e)
+                {
+                    // TIMEOUT EXCEPTION VS REPLICA DOWN
+
+                    // Replica down
+                    // TODO: Remove the replica!!!
+                    Console.WriteLine("UpdateIfValueIs Failed to Replica: " + sId);
+                    Console.WriteLine(e.Message);
+                }
+            }
+            return new DIDAWorker.DIDAVersion { VersionNumber = -1, ReplicaId = -1 };
         }
 
         public DIDAMetaRecord GetMetaRecord()

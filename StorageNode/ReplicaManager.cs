@@ -142,6 +142,19 @@ namespace StorageNode
             return false;
         }
 
+        public bool IsVersionBigger(DIDAVersion myVersion, DIDAVersion otherVersion)
+        {
+            if (myVersion.VersionNumber > otherVersion.VersionNumber)
+            {
+                return true;
+            }
+            if (myVersion.VersionNumber == otherVersion.VersionNumber && myVersion.ReplicaId > otherVersion.ReplicaId)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public List<DIDAStorage.DIDAVersion> ComputeGossipTimestampsDifferences(List<DIDAStorage.DIDAVersion> myTimestamp, List<DIDAStorage.DIDAVersion> otherTimestamp)
         {
             List<DIDAStorage.DIDAVersion> timestampsDifferences = new List<DIDAStorage.DIDAVersion>();

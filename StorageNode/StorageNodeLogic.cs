@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Timers;
 using CHashing;
+using System.Threading.Tasks;
 
 namespace StorageNode
 {
@@ -106,7 +107,160 @@ namespace StorageNode
 
         public DIDAStorage.DIDAVersion UpdateIfValueIs(string id, string oldvalue, string newvalue)
         {
-            throw new NotImplementedException();
+            lock (this)
+            {
+                List<string> storageIds = new List<string>();
+                foreach (StorageNodeStruct sns in storageNodes.Values)
+                {
+                    storageIds.Add(sns.serverId);
+                }
+                storageIds.Add(this.serverId);
+                ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
+                List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(id);
+
+                // List<AsyncUnaryCall<LockAndPullReply>> lockingTasks = new List<AsyncUnaryCall<LockAndPullReply>>();
+                List<LockAndPullReply> replies = new List<LockAndPullReply>();
+                LockAndPullRequest lockRequest;
+
+                foreach (string sId in setOfReplicas)
+                {
+                    // Dont request to ourselves
+                    if (sId == this.serverId) continue;
+
+                    lockRequest = new LockAndPullRequest
+                    {
+                        Key = id
+                    };
+
+                    try
+                    {
+                        replies.Add(storageNodes[sId].uiviClient.LockAndPull(lockRequest));
+                    }
+                    catch (RpcException e)
+                    {
+                        Console.WriteLine("Status Code: " + e.StatusCode);
+                        // if (e.StatusCode == StatusCode.)
+                    }
+
+                    // lockingTasks.Add(storageNodes[sId].uiviClient.LockAndPullAsync(request));
+                }
+
+                // TODO: TIMEOUTSS
+
+                // await Task.WhenAll(lockingTasks.Select(res => res.ResponseAsync));
+
+                // This replica starts being the max version
+                DIDARecord maxRecord;
+                if (this.storage.ContainsKey(id) && this.storage[id].Count > 0)
+                {
+                    DIDAStorage.DIDARecord record = this.storage[id][this.storage[id].Count - 1];
+                    maxRecord = new DIDARecord
+                    {
+                        Id = record.id,
+                        Val = record.val,
+                        Version = new DIDAVersion
+                        {
+                            VersionNumber = record.version.versionNumber,
+                            ReplicaId = record.version.replicaId
+                        }
+                    };
+                }
+                else
+                {
+                    maxRecord = new DIDARecord
+                    {
+                        Id = id,
+                        Val = "1",
+                        Version = new DIDAVersion
+                        {
+                            VersionNumber = -1,
+                            ReplicaId = -1
+                        }
+                    };
+                }
+
+                foreach (LockAndPullReply reply in replies)
+                {
+                    if (this.replicaManager.IsVersionBigger(reply.Record.Version, maxRecord.Version))
+                    {
+                        maxRecord = reply.Record;
+                    }
+                }
+
+                DIDAStorage.DIDAVersion nextVersion = new DIDAStorage.DIDAVersion
+                {
+                    versionNumber = maxRecord.Version.VersionNumber + 1,
+                    replicaId = this.replicaId
+                };
+
+                DIDAStorage.DIDARecord nextRecord = new DIDAStorage.DIDARecord
+                {
+                    id = maxRecord.Id,
+                    val = newvalue,
+                    version = nextVersion
+                };
+
+                CommitPhaseRequest commitRequest;
+
+                if (maxRecord.Val == oldvalue) // If VALUE IS
+                {
+
+                    if (storage.ContainsKey(id))
+                    {
+                        List<DIDAStorage.DIDARecord> items = storage[id];
+
+                        // If Queue is full
+                        if (items.Count == MAX_VERSIONS_STORED)
+                        {
+                            items.RemoveAt(0);
+                        }
+                        items.Add(nextRecord);
+                        this.replicaManager.AddTimeStamp(this.replicaId, id, nextVersion);
+                    }
+                    else
+                    {
+                        storage.Add(id, new List<DIDAStorage.DIDARecord>());
+                        storage[id].Add(nextRecord);
+                        this.replicaManager.CreateNewTimeStamp(
+                            this.replicaId,
+                            id,
+                            nextVersion
+                        );
+                    }
+
+                    commitRequest = new CommitPhaseRequest
+                    {
+                        CanCommit = true,
+                        Record = maxRecord
+                    };
+                }
+                else
+                {
+                    commitRequest = new CommitPhaseRequest
+                    {
+                        CanCommit = false,
+                        Record = maxRecord
+                    };
+                }
+
+                foreach (string sId in setOfReplicas)
+                {
+                    // Dont request to ourselves
+                    if (sId == this.serverId) continue;
+
+                    try
+                    {
+                        // await ???
+                        storageNodes[sId].uiviClient.CommitPhaseAsync(commitRequest);
+                    }
+                    catch (RpcException e)
+                    {
+                        Console.WriteLine("Status Code: " + e.StatusCode);
+                    }
+                }
+
+                return nextVersion;
+            }
         }
 
         public DIDAStorage.DIDAVersion Write(string id, string val)
@@ -239,6 +393,7 @@ namespace StorageNode
                 node.url = si.Url;
                 node.channel = GrpcChannel.ForAddress(node.url);
                 node.gossipClient = new GossipService.GossipServiceClient(node.channel);
+                node.uiviClient = new UpdateIfValueIsService.UpdateIfValueIsServiceClient(node.channel);
 
                 Console.WriteLine("Added Storage server Id: " + node.serverId);
                 storageNodes.Add(node.serverId, node);
@@ -280,8 +435,6 @@ namespace StorageNode
                         // Dont gossip to ourselves
                         if (sId == this.serverId) continue;
 
-                        Console.WriteLine("FOR ServerId: " + sId.ToString());
-
                         if (!gossipRequests.ContainsKey(sId))
                         {
                             gossipRequests.Add(sId, new GossipRequest { ReplicaId = this.replicaId });
@@ -294,11 +447,6 @@ namespace StorageNode
                         }
 
                         List<DIDAStorage.DIDAVersion> timestampsToSend = this.replicaManager.ComputeGossipTimestampsDifferences(myReplicaTimestamp[key], snsReplicaTimestamp[key]);
-                        Console.WriteLine("DIFFERENCES - TIMESTAMP TO SEND: KEY: " + key);
-                        foreach (DIDAStorage.DIDAVersion sss in timestampsToSend)
-                        {
-                            Console.WriteLine("SSS: " + sss.versionNumber + " : " + sss.replicaId);
-                        }
 
                         foreach (DIDAStorage.DIDAVersion snsVersion in timestampsToSend)
                         {
@@ -421,6 +569,19 @@ namespace StorageNode
             
             return reply;
         }
+
+        public LockAndPullReply LockAndPull(LockAndPullRequest request)
+        {
+
+            return new LockAndPullReply { };
+        }
+
+        public CommitPhaseReply CommitPhase(CommitPhaseRequest request)
+        {
+
+            return new CommitPhaseReply { Okay = true };
+        }
+
     }
     public struct StorageNodeStruct
     {
@@ -429,5 +590,6 @@ namespace StorageNode
         public int replicaId;
         public GrpcChannel channel;
         public GossipService.GossipServiceClient gossipClient;
+        public UpdateIfValueIsService.UpdateIfValueIsServiceClient uiviClient;
     }
 }

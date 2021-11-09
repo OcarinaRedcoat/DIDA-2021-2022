@@ -19,3 +19,27 @@ message GossipRequest {
 message GossipReply {
 	repeated TimeStamp replicaTimestamp = 1;
 }
+
+
+
+service UpdateIfValueIsService {
+	rpc LockAndPull(LockAndPullRequest) returns (LockAndPullReply) {}
+	rpc CommitPhase(CommitPhaseRequest) returns (CommitPhaseReply) {}
+}
+
+message LockAndPullRequest {
+	string key = 1;
+}
+
+message LockAndPullReply {
+	DIDARecord record = 1;
+}
+
+message CommitPhaseRequest {
+	bool canCommit = 1;
+	DIDARecord record = 2;
+}
+
+message CommitPhaseReply {
+	bool okay = 1;
+}

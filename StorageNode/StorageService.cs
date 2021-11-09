@@ -160,6 +160,26 @@ namespace StorageNode
         }
     }
 
+    class StorageUpdateIfValueIsService : UpdateIfValueIsService.UpdateIfValueIsServiceBase
+    {
+        private StorageNodeLogic storageNodeLogic;
+
+        public StorageUpdateIfValueIsService(ref StorageNodeLogic logic)
+        {
+            this.storageNodeLogic = logic;
+        }
+
+        public override Task<CommitPhaseReply> CommitPhase(CommitPhaseRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(storageNodeLogic.CommitPhase(request));
+        }
+
+        public override Task<LockAndPullReply> LockAndPull(LockAndPullRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(storageNodeLogic.LockAndPull(request));
+        }
+    }
+
     class StorageServer
     {
         private int port;
@@ -180,7 +200,8 @@ namespace StorageNode
                     DIDAStorageService.BindService(new StorageNodeService(ref logic)),
                     PMStorageService.BindService(new PuppetMasterStorageService(ref logic)),
                     StatusService.BindService(new StorageStatusService(ref logic)),
-                    GossipService.BindService(new StorageGossipService(ref logic))
+                    GossipService.BindService(new StorageGossipService(ref logic)),
+                    UpdateIfValueIsService.BindService(new StorageUpdateIfValueIsService(ref logic))
                 } ,
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
