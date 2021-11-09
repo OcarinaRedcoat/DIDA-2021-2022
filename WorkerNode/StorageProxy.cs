@@ -103,13 +103,19 @@ namespace WorkerNode
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
             List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
+            Console.WriteLine("Populating key: " + r.Id);
+            Console.WriteLine("SetOfReplicas: ");
+            foreach (string rep in storagesIds)
+            {
+                Console.WriteLine("RP: " + rep);
+            }
             DIDAStorageClient.DIDAVersion res;
             foreach (string sId in storagesIds)
             {
                 try
                 {
                     Console.WriteLine("Calling Write on... " + sId);
-                    res = _clients["s1"].write(
+                    res = _clients[sId].write(
                         new DIDAStorageClient.DIDAWriteRequest
                         {
                             Id = r.Id,

@@ -59,6 +59,7 @@ namespace StorageNode
 
         public void AddTimeStamp(int replicaId, string key, DIDAStorage.DIDAVersion version)
         {
+            bool inserted = false;
             if (replicaId == this.myReplicaId)
             {
                 for (int i = 0; i < replicaTimestamp[key].Count; i++)
@@ -66,11 +67,17 @@ namespace StorageNode
                     if (this.IsVersionBigger(replicaTimestamp[key][i], version))
                     {
                         replicaTimestamp[key].Insert(i, version);
+                        inserted = true;
                         break;
                     }
                 }
 
-                if (replicaTimestamp[key].Count >= MAX_VERSIONS)
+                if (!inserted)
+                {
+                    replicaTimestamp[key].Add(version);
+                }
+
+                if (replicaTimestamp[key].Count > MAX_VERSIONS)
                 {
                     replicaTimestamp[key].RemoveAt(0);
                 }
@@ -83,11 +90,17 @@ namespace StorageNode
                     if (this.IsVersionBigger(timeStampTable[replicaId][key][i], version))
                     {
                         timeStampTable[replicaId][key].Insert(i, version);
+                        inserted = true;
                         break;
                     }
                 }
 
-                if (timeStampTable[replicaId][key].Count >= MAX_VERSIONS)
+                if (!inserted)
+                {
+                    timeStampTable[replicaId][key].Add(version);
+                }
+
+                if (timeStampTable[replicaId][key].Count > MAX_VERSIONS)
                 {
                     timeStampTable[replicaId][key].RemoveAt(0);
                 }
@@ -97,11 +110,14 @@ namespace StorageNode
         public void ReplaceTimeStamp(int replicaId, RepeatedField<TimeStamp> timeStamp)
         {
             Dictionary<string, List<DIDAStorage.DIDAVersion>> newReplicaTimestamp = new Dictionary<string, List<DIDAStorage.DIDAVersion>>();
+            Console.WriteLine("ReplaceTimeStamp!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             foreach (TimeStamp ts in timeStamp)
             {
+                Console.WriteLine("TS: KEY" + ts.Key + "==>");
                 newReplicaTimestamp.Add(ts.Key, new List<DIDAStorage.DIDAVersion>());
                 foreach (DIDAVersion grpcVersion in ts.Timestamp)
                 {
+                    Console.WriteLine("      TS VERSION: " + grpcVersion.VersionNumber + " : " + grpcVersion.ReplicaId);
                     DIDAStorage.DIDAVersion version = new DIDAStorage.DIDAVersion
                     {
                         replicaId = grpcVersion.ReplicaId,

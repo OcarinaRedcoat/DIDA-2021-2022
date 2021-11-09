@@ -335,7 +335,7 @@ namespace PuppetMasterGUI
                     // Print the results like:
                     // key    |   versions (versionNumber, ReplicaId, valueX)
                     // money  |   (1, 1, 1000) (2, 1, 2000)
-                    string res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                    string res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
                     foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                     {
                         res += pair.Key + " : ";
@@ -391,7 +391,7 @@ namespace PuppetMasterGUI
                 // Print the results like:
                 // key    |   versions (versionNumber, ReplicaId, valueX)
                 // money  |   (1, 1, 1000) (2, 1, 2000)
-                res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
                 foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                 {
                     res += pair.Key + " : ";

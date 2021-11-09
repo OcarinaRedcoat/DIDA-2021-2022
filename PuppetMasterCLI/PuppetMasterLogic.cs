@@ -115,6 +115,7 @@ namespace PuppetMasterCLI
                 StorageInfo storageInfo = new StorageInfo
                 {
                     Id = sns.serverId,
+                    ReplicaId = sns.replicaId,
                     Url = sns.url
                 };
                 storagesRequest.Storages.Add(storageInfo);
@@ -149,6 +150,7 @@ namespace PuppetMasterCLI
                 setupRequest.Storages.Add(new StorageInfo
                 {
                     Id = sns.serverId,
+                    ReplicaId = sns.replicaId,
                     Url = sns.url
                 });
             }
@@ -215,6 +217,8 @@ namespace PuppetMasterCLI
                 PopulateRequest request = new PopulateRequest();
 
                 List<string> setOfReplicas = consistentHasing.ComputeSetOfReplicas(key);
+                Console.WriteLine("Populating key: " + key);
+                Console.WriteLine("SetOfReplicas: ");
 
                 string firstReplica = setOfReplicas[0];
 
@@ -239,6 +243,7 @@ namespace PuppetMasterCLI
 
                 foreach (string replicaServerId in setOfReplicas)
                 {
+                    Console.WriteLine("REP: " + replicaServerId);
                     foreach (StorageNodeStruct sns in storageNodes)
                     {
                         if (replicaServerId == sns.serverId)
@@ -327,7 +332,7 @@ namespace PuppetMasterCLI
                     // Print the results like:
                     // key    |   versions (versionNumber, ReplicaId, valueX)
                     // money  |   (1, 1, 1000) (2, 1, 2000)
-                    String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                    String res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
                     foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                     {
                         res += pair.Key + " : ";
@@ -382,7 +387,7 @@ namespace PuppetMasterCLI
                 // Print the results like:
                 // key    |   versions (versionNumber, ReplicaId, valueX)
                 // money  |   (1, 1, 1000) (2, 1, 2000)
-                String res = "key      :   versions (versionNumber, ReplicaId, valueX)";
+                String res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
                 foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                 {
                     res += pair.Key + " : ";

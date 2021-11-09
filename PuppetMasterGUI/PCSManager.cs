@@ -43,7 +43,7 @@ namespace PuppetMasterGUI
                     {
                         ServerId = serverId,
                         Url = url,
-                        GossipDelay = gossipDelay,
+                        Delay = gossipDelay,
                         Debug = debug,
                         LogURL = logURL
                     }

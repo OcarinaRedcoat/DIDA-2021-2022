@@ -10,7 +10,7 @@ service PCSService {
 message CreateWorkerNodeRequest {
 	string serverId = 1;
 	string url = 2;
-	int32 gossipDelay = 3 ; // in milisseconds
+	int32 delay = 3 ; // in milisseconds
 	bool debug = 4;
 	string logURL = 5;
 }

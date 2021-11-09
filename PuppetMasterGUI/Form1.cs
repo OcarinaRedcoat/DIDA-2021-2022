@@ -96,7 +96,7 @@ namespace PuppetMasterGUI
         {
             string input = inputClient.Text;
             string appFileName = appFile.Text;
-            logic.ClientRequest(input, appFileName);
+            logic.ClientRequest(appFileName, input);
             btnDebug.Enabled = false;
         }
 

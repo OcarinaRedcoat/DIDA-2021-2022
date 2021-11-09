@@ -36,6 +36,7 @@ namespace StorageNode
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             timer.AutoReset = true;
             timer.Enabled = false;
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         }
 
         public StatusReply Status()
@@ -240,6 +241,7 @@ namespace StorageNode
                 node.gossipClient = new GossipService.GossipServiceClient(node.channel);
 
                 Console.WriteLine("Added Storage server Id: " + node.serverId);
+                storageNodes.Add(node.serverId, node);
 
                 this.replicaManager.AddStorageReplica(node.replicaId);
             }
@@ -272,16 +274,19 @@ namespace StorageNode
                 {
                     ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
                     List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(key);
-                    foreach (string serverId in setOfReplicas)
+
+                    foreach (string sId in setOfReplicas)
                     {
                         // Dont gossip to ourselves
-                        if (serverId == this.serverId) continue;
+                        if (sId == this.serverId) continue;
 
-                        if (!gossipRequests.ContainsKey(serverId))
+                        Console.WriteLine("FOR ServerId: " + sId.ToString());
+
+                        if (!gossipRequests.ContainsKey(sId))
                         {
-                            gossipRequests.Add(serverId, new GossipRequest { ReplicaId = this.replicaId });
+                            gossipRequests.Add(sId, new GossipRequest { ReplicaId = this.replicaId });
                         }
-                        StorageNodeStruct sns = this.storageNodes[serverId];
+                        StorageNodeStruct sns = this.storageNodes[sId];
                         Dictionary<string, List<DIDAStorage.DIDAVersion>> snsReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(sns.replicaId);
                         if (!snsReplicaTimestamp.ContainsKey(key))
                         {
@@ -289,6 +294,11 @@ namespace StorageNode
                         }
 
                         List<DIDAStorage.DIDAVersion> timestampsToSend = this.replicaManager.ComputeGossipTimestampsDifferences(myReplicaTimestamp[key], snsReplicaTimestamp[key]);
+                        Console.WriteLine("DIFFERENCES - TIMESTAMP TO SEND: KEY: " + key);
+                        foreach (DIDAStorage.DIDAVersion sss in timestampsToSend)
+                        {
+                            Console.WriteLine("SSS: " + sss.versionNumber + " : " + sss.replicaId);
+                        }
 
                         foreach (DIDAStorage.DIDAVersion snsVersion in timestampsToSend)
                         {
@@ -296,7 +306,7 @@ namespace StorageNode
                             {
                                 if (record.version.versionNumber == snsVersion.versionNumber && record.version.replicaId == snsVersion.replicaId)
                                 {
-                                    gossipRequests[serverId].UpdateLogs.Add(new DIDARecord
+                                    gossipRequests[sId].UpdateLogs.Add(new DIDARecord
                                     {
                                         Id = key,
                                         Val = record.val,
@@ -319,21 +329,32 @@ namespace StorageNode
                                 ReplicaId = version.replicaId
                             });
                         }
-                        gossipRequests[serverId].ReplicaTimestamp.Add(grpcTimestamp);
+                        gossipRequests[sId].ReplicaTimestamp.Add(grpcTimestamp);
                     }
                 }
 
                 foreach (string requestServerId in gossipRequests.Keys)
                 {
-                    GossipRequest request = gossipRequests[requestServerId];
-                    GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
-                    this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
+                    try
+                    {
+                        GossipRequest request = gossipRequests[requestServerId];
+                        if (request.UpdateLogs.Count > 0)
+                        {
+                            Console.WriteLine("============>>> REQUESTT <<<<========================= ServerId: " + requestServerId);
+                            GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
+                            this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
+                        }
+                    } catch (Exception e)
+                    {
+                        Console.WriteLine("Gossip Requests exception: " + e.Message);
+                    }
                 }
             }
         }
 
         public GossipReply ReceiveGossip(GossipRequest request)
         {
+            Console.WriteLine("Receive Gossip from: " + request.ReplicaId);
             Dictionary<string, List<DIDAStorage.DIDAVersion>> myReplicaTimestamp;
             lock (this)
             {

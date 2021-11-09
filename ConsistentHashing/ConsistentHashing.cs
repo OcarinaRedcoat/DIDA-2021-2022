@@ -27,8 +27,21 @@ namespace CHashing
                 });
                 storageIdx++;
             }
+            this.storageHashIds.Sort(CompareHashIds);
 
             this.replicationFactor = ((storageIds.Count / 2)) + 1;
+        }
+
+        private static int CompareHashIds(HashStorageNode x, HashStorageNode y)
+        {
+            if (x.hashUpperBound < y.hashUpperBound)
+            {
+                return -1;
+            } else if (x.hashUpperBound == y.hashUpperBound)
+            {
+                return 0;
+            }
+            return 1;
         }
 
         public int NodeHash(int idx)
