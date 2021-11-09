@@ -81,7 +81,7 @@ namespace WorkerNode
                         }
                     );
                     // If the replica does not have the version required, try another one!
-                    if (res.Version.ReplicaId.Equals(-1) && res.Version.VersionNumber.Equals(-1))
+                    if (res.Version.ReplicaId == -1 && res.Version.VersionNumber == -1)
                     {
                         Console.WriteLine("Replica does not have the version required...");
                         continue;
@@ -210,6 +210,12 @@ namespace WorkerNode
                     );
 
                     // TODO: TIMEOUT in GRPC setting????
+                    // if null object retry next replica
+                    if (res.ReplicaId == -1 && res.VersionNumber == -1)
+                    {
+                        Console.WriteLine("Replica " + sId +  " aborted");
+                        continue;
+                    }
 
                     Console.WriteLine("UpdateIfValueIs Succeed: " + sId);
                     return new DIDAWorker.DIDAVersion
@@ -217,7 +223,8 @@ namespace WorkerNode
                         VersionNumber = res.VersionNumber,
                         ReplicaId = res.ReplicaId
                     };
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     // TIMEOUT EXCEPTION VS REPLICA DOWN
 

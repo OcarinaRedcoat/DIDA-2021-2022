@@ -33,6 +33,7 @@ message LockAndPullRequest {
 
 message LockAndPullReply {
 	DIDARecord record = 1;
+	bool alreadyLocked = 2;
 }
 
 message CommitPhaseRequest {

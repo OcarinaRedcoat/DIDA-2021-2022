@@ -18,6 +18,9 @@ namespace StorageNode
 
         private Dictionary<string, StorageNodeStruct> storageNodes = new Dictionary<string, StorageNodeStruct>();
 
+        // if uivi cant write key during consensus
+        private Dictionary<string, bool> consensusLock = new Dictionary<string, bool>();
+
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
         private ReplicaManager replicaManager;
@@ -39,6 +42,7 @@ namespace StorageNode
             timer.Enabled = false;
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         }
+
 
         public StatusReply Status()
         {
@@ -73,7 +77,7 @@ namespace StorageNode
                 }
             };
 
-            lock (storage) 
+            lock (this)
             {
                 Console.WriteLine("Reading... " + id);
 
@@ -109,46 +113,66 @@ namespace StorageNode
         {
             lock (this)
             {
-                List<string> storageIds = new List<string>();
-                foreach (StorageNodeStruct sns in storageNodes.Values)
+                if (consensusLock[id])
                 {
-                    storageIds.Add(sns.serverId);
-                }
-                storageIds.Add(this.serverId);
-                ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
-                List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(id);
-
-                // List<AsyncUnaryCall<LockAndPullReply>> lockingTasks = new List<AsyncUnaryCall<LockAndPullReply>>();
-                List<LockAndPullReply> replies = new List<LockAndPullReply>();
-                LockAndPullRequest lockRequest;
-
-                foreach (string sId in setOfReplicas)
-                {
-                    // Dont request to ourselves
-                    if (sId == this.serverId) continue;
-
-                    lockRequest = new LockAndPullRequest
+                    return new DIDAStorage.DIDAVersion
                     {
-                        Key = id
+                        replicaId = -1,
+                        versionNumber = -1
                     };
+                }
+                consensusLock[id] = true;
 
-                    try
-                    {
-                        replies.Add(storageNodes[sId].uiviClient.LockAndPull(lockRequest));
-                    }
-                    catch (RpcException e)
-                    {
-                        Console.WriteLine("Status Code: " + e.StatusCode);
-                        // if (e.StatusCode == StatusCode.)
-                    }
+            }
 
-                    // lockingTasks.Add(storageNodes[sId].uiviClient.LockAndPullAsync(request));
+            // storageNodes never edited
+            List<string> storageIds = new List<string>();
+            foreach (StorageNodeStruct sns in storageNodes.Values)
+            {
+                storageIds.Add(sns.serverId);
+            }
+            storageIds.Add(this.serverId);
+            ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
+            List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(id);
+
+
+            // List<AsyncUnaryCall<LockAndPullReply>> lockingTasks = new List<AsyncUnaryCall<LockAndPullReply>>();
+            List<LockAndPullReply> replies = new List<LockAndPullReply>();
+            LockAndPullRequest lockRequest;
+
+            foreach (string sId in setOfReplicas)
+            {
+                // Dont request to ourselves
+                if (sId == this.serverId) continue;
+
+                lockRequest = new LockAndPullRequest
+                {
+                    Key = id
+                };
+
+                try
+                {
+                    replies.Add(storageNodes[sId].uiviClient.LockAndPull(lockRequest));
+                }
+                catch (RpcException e)
+                {
+                    Console.WriteLine("Status Code: " + e.StatusCode);
+                    // if (e.StatusCode == StatusCode.)
                 }
 
-                // TODO: TIMEOUTSS
+                // lockingTasks.Add(storageNodes[sId].uiviClient.LockAndPullAsync(request));
+            }
 
-                // await Task.WhenAll(lockingTasks.Select(res => res.ResponseAsync));
+            // TODO: TIMEOUTSS
 
+            // await Task.WhenAll(lockingTasks.Select(res => res.ResponseAsync));
+
+            bool abort = false;
+
+            CommitPhaseRequest commitRequest;
+            DIDAStorage.DIDAVersion nextVersion;
+            lock (this)
+            {
                 // This replica starts being the max version
                 DIDARecord maxRecord;
                 if (this.storage.ContainsKey(id) && this.storage[id].Count > 0)
@@ -179,60 +203,85 @@ namespace StorageNode
                     };
                 }
 
+
                 foreach (LockAndPullReply reply in replies)
                 {
+                    if (reply.AlreadyLocked)
+                    {
+                        abort = true;
+                        break;
+
+                    }
                     if (this.replicaManager.IsVersionBigger(reply.Record.Version, maxRecord.Version))
                     {
                         maxRecord = reply.Record;
                     }
                 }
 
-                DIDAStorage.DIDAVersion nextVersion = new DIDAStorage.DIDAVersion
+                if (!abort)
                 {
-                    versionNumber = maxRecord.Version.VersionNumber + 1,
-                    replicaId = this.replicaId
-                };
-
-                DIDAStorage.DIDARecord nextRecord = new DIDAStorage.DIDARecord
-                {
-                    id = maxRecord.Id,
-                    val = newvalue,
-                    version = nextVersion
-                };
-
-                CommitPhaseRequest commitRequest;
-
-                if (maxRecord.Val == oldvalue) // If VALUE IS
-                {
-
-                    if (storage.ContainsKey(id))
+                    nextVersion = new DIDAStorage.DIDAVersion
                     {
-                        List<DIDAStorage.DIDARecord> items = storage[id];
+                        versionNumber = maxRecord.Version.VersionNumber + 1,
+                        replicaId = this.replicaId
+                    };
 
-                        // If Queue is full
-                        if (items.Count == MAX_VERSIONS_STORED)
+                    DIDAStorage.DIDARecord nextRecord = new DIDAStorage.DIDARecord
+                    {
+                        id = maxRecord.Id,
+                        val = newvalue,
+                        version = nextVersion
+                    };
+
+
+                    if (maxRecord.Val == oldvalue) // If VALUE IS
+                    {
+
+                        if (storage.ContainsKey(id))
                         {
-                            items.RemoveAt(0);
+                            List<DIDAStorage.DIDARecord> items = storage[id];
+
+                            // If Queue is full
+                            if (items.Count == MAX_VERSIONS_STORED)
+                            {
+                                items.RemoveAt(0);
+                            }
+                            items.Add(nextRecord);
+                            this.replicaManager.AddTimeStamp(this.replicaId, id, nextVersion);
                         }
-                        items.Add(nextRecord);
-                        this.replicaManager.AddTimeStamp(this.replicaId, id, nextVersion);
+                        else
+                        {
+
+                            //storage.Add(id, new List<DIDAStorage.DIDARecord>());
+                            this.AddNewKey(id);
+                            storage[id].Add(nextRecord);
+                            this.replicaManager.CreateNewTimeStamp(
+                                this.replicaId,
+                                id,
+                                nextVersion
+                            );
+                        }
+
+                        commitRequest = new CommitPhaseRequest
+                        {
+                            CanCommit = true,
+                            Record = maxRecord
+                        };
                     }
                     else
                     {
-                        storage.Add(id, new List<DIDAStorage.DIDARecord>());
-                        storage[id].Add(nextRecord);
-                        this.replicaManager.CreateNewTimeStamp(
-                            this.replicaId,
-                            id,
-                            nextVersion
-                        );
-                    }
+                        commitRequest = new CommitPhaseRequest
+                        {
+                            CanCommit = false,
+                            Record = maxRecord
+                        };
 
-                    commitRequest = new CommitPhaseRequest
-                    {
-                        CanCommit = true,
-                        Record = maxRecord
-                    };
+                        nextVersion = new DIDAStorage.DIDAVersion
+                        {
+                            replicaId = -1,
+                            versionNumber = -1
+                        };
+                    }
                 }
                 else
                 {
@@ -241,36 +290,146 @@ namespace StorageNode
                         CanCommit = false,
                         Record = maxRecord
                     };
+
+                    nextVersion = new DIDAStorage.DIDAVersion
+                    {
+                        replicaId = -1,
+                        versionNumber = -1
+                    };
+
                 }
 
-                foreach (string sId in setOfReplicas)
-                {
-                    // Dont request to ourselves
-                    if (sId == this.serverId) continue;
-
-                    try
-                    {
-                        // await ???
-                        storageNodes[sId].uiviClient.CommitPhaseAsync(commitRequest);
-                    }
-                    catch (RpcException e)
-                    {
-                        Console.WriteLine("Status Code: " + e.StatusCode);
-                    }
-                }
-
-                return nextVersion;
             }
+
+            foreach (string sId in setOfReplicas)
+            {
+                // Dont request to ourselves
+                if (sId == this.serverId) continue;
+
+                try
+                {
+                    // await ???
+                    storageNodes[sId].uiviClient.CommitPhaseAsync(commitRequest);
+                }
+                catch (RpcException e)
+                {
+                    Console.WriteLine("Status Code: " + e.StatusCode);
+                }
+            }
+
+            consensusLock[id] = false;
+
+            return nextVersion;
+        }
+
+        public LockAndPullReply LockAndPull(LockAndPullRequest request)
+        {
+            DIDARecord maxRecord;
+
+            //TODO add timeout
+            lock (this)
+            {
+                if (consensusLock[request.Key])
+                {
+                    return new LockAndPullReply { AlreadyLocked = true };
+                }
+                consensusLock[request.Key] = true;
+
+                if (this.storage.ContainsKey(request.Key) && this.storage[request.Key].Count > 0)
+                {
+                    DIDAStorage.DIDARecord record = this.storage[request.Key][this.storage[request.Key].Count - 1];
+                    maxRecord = new DIDARecord
+                    {
+                        Id = record.id,
+                        Val = record.val,
+                        Version = new DIDAVersion
+                        {
+                            VersionNumber = record.version.versionNumber,
+                            ReplicaId = record.version.replicaId
+                        }
+                    };
+                }
+                else
+                {
+                    maxRecord = new DIDARecord
+                    {
+                        Id = request.Key,
+                        Val = "1",
+                        Version = new DIDAVersion
+                        {
+                            VersionNumber = -1,
+                            ReplicaId = -1
+                        }
+                    };
+                }
+            }
+
+            return new LockAndPullReply { AlreadyLocked = false, Record = maxRecord };
+        }
+
+        public CommitPhaseReply CommitPhase(CommitPhaseRequest request)
+        {
+            lock (this)
+            {
+                consensusLock[request.Record.Id] = false;
+
+                if (!this.storage.ContainsKey(request.Record.Id))
+                {
+                    //this.storage.Add(request.Record.Id, new List<DIDAStorage.DIDARecord>());
+                    this.AddNewKey(request.Record.Id);
+
+                    this.replicaManager.CreateNewTimeStamp(this.replicaId, request.Record.Id, new DIDAStorage.DIDAVersion { versionNumber = -1, replicaId = -1 });
+                }
+
+                for (int i = 0; i < this.storage[request.Record.Id].Count; i++)
+                {
+                    DIDAStorage.DIDAVersion newVersion = new DIDAStorage.DIDAVersion
+                    {
+                        replicaId = request.Record.Version.ReplicaId,
+                        versionNumber = request.Record.Version.VersionNumber
+                    };
+
+                    if (this.replicaManager.IsVersionBigger(newVersion, this.storage[request.Record.Id][i].version))
+                    {
+                        DIDAStorage.DIDARecord newRecord = new DIDAStorage.DIDARecord
+                        {
+                            id = request.Record.Id,
+                            version = newVersion,
+                            val = request.Record.Val
+                        };
+                        this.storage[request.Record.Id].Insert(i, newRecord);
+                        if (this.storage[request.Record.Id].Count > MAX_VERSIONS_STORED)
+                        {
+                            this.storage[request.Record.Id].RemoveAt(0);
+                        }
+
+                        this.replicaManager.AddTimeStamp(replicaId, request.Record.Id, newVersion);
+
+                        break;
+                    }
+                }
+            }
+
+            return new CommitPhaseReply { Okay = true };
         }
 
         public DIDAStorage.DIDAVersion Write(string id, string val)
         {
-
             DIDAStorage.DIDAVersion didaVersion;
             List<DIDAStorage.DIDARecord> recordValues;
 
             lock (this)
             {
+
+                if (consensusLock[id])
+                {
+                    return new DIDAStorage.DIDAVersion
+                    {
+                        replicaId = -1,
+                        versionNumber = -1
+                    };
+                }
+
                 if (!this.startedGossip)
                 {
                     this.startedGossip = true;
@@ -313,7 +472,8 @@ namespace StorageNode
                 }
                 else
                 {
-                    storage.Add(id, new List<DIDAStorage.DIDARecord>());
+                    //storage.Add(id, new List<DIDAStorage.DIDARecord>());
+                    this.AddNewKey(id);
                     storage[id].Add(didaRecord);
                     this.replicaManager.CreateNewTimeStamp(
                         this.replicaId,
@@ -326,7 +486,7 @@ namespace StorageNode
             return didaVersion;
         }
 
-        public PopulateReply PopulateSerialize(RepeatedField<KeyValuePair> keyValuePairs)
+        public PopulateReply Populate(RepeatedField<KeyValuePair> keyValuePairs)
         {
             foreach (KeyValuePair pair in keyValuePairs)
             {
@@ -339,9 +499,11 @@ namespace StorageNode
                 record.val = pair.Value;
                 record.version = version;
 
-                List<DIDAStorage.DIDARecord> listRecords = new List<DIDAStorage.DIDARecord>();
-                listRecords.Add(record);
-                storage.Add(pair.Key, listRecords);
+                //List<DIDAStorage.DIDARecord> listRecords = new List<DIDAStorage.DIDARecord>();
+                //listRecords.Add(record);
+                //storage.Add(pair.Key, listRecords);
+                this.AddNewKey(record.id);
+                this.storage[record.id].Add(record);
 
                 this.replicaManager.CreateNewTimeStamp(
                     this.replicaId,
@@ -357,11 +519,6 @@ namespace StorageNode
             }
 
             return new PopulateReply { Okay = true };
-        }
-
-        public PopulateReply Populate(RepeatedField<KeyValuePair> keyValuePairs)
-        {
-            return PopulateSerialize(keyValuePairs);
         }
 
         public List<DIDAStorage.DIDARecord> Dump()
@@ -470,7 +627,8 @@ namespace StorageNode
                         }
 
                         var grpcTimestamp = new TimeStamp { Key = key };
-                        foreach (DIDAStorage.DIDAVersion version in myReplicaTimestamp[key]) {
+                        foreach (DIDAStorage.DIDAVersion version in myReplicaTimestamp[key])
+                        {
                             grpcTimestamp.Timestamp.Add(new DIDAVersion
                             {
                                 VersionNumber = version.versionNumber,
@@ -492,7 +650,8 @@ namespace StorageNode
                             GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
                             this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
                         }
-                    } catch (Exception e)
+                    }
+                    catch (Exception e)
                     {
                         Console.WriteLine("Gossip Requests exception: " + e.Message);
                     }
@@ -519,7 +678,8 @@ namespace StorageNode
 
                     if (!this.storage.ContainsKey(update.Id))
                     {
-                        this.storage.Add(update.Id, new List<DIDAStorage.DIDARecord>());
+                        //this.storage.Add(update.Id, new List<DIDAStorage.DIDARecord>());
+                        this.AddNewKey(update.Id);
                         this.replicaManager.CreateNewTimeStamp(otherReplicaId, update.Id, new DIDAStorage.DIDAVersion { versionNumber = -1, replicaId = -1 });
                     }
 
@@ -566,22 +726,17 @@ namespace StorageNode
                 }
                 reply.ReplicaTimestamp.Add(grpcTimestamp);
             }
-            
+
             return reply;
         }
 
-        public LockAndPullReply LockAndPull(LockAndPullRequest request)
+
+
+        private void AddNewKey(string key)
         {
-
-            return new LockAndPullReply { };
+            this.storage.Add(key, new List<DIDAStorage.DIDARecord>());
+            this.consensusLock.Add(key, false);
         }
-
-        public CommitPhaseReply CommitPhase(CommitPhaseRequest request)
-        {
-
-            return new CommitPhaseReply { Okay = true };
-        }
-
     }
     public struct StorageNodeStruct
     {
