@@ -42,27 +42,28 @@ namespace WorkerNode
             return new StatusReply { };
         }
 
-        public string ProcessOperator(DIDARequest req)
+        public string ProcessOperator(DIDARequest req, DIDAMetaRecord prevMeta, out DIDAMetaRecord newMeta)
         {
             string output = "";
-            // TODO: Ask prof about where to wait??
-            Thread.Sleep(responseDelay);
+
+            DIDAStorageNode[] storageNodesArray = new DIDAStorageNode[storagesNodes.Count];
+
+            for (int i = 0; i < storagesNodes.Count; i++)
+            {
+                storageNodesArray[i] = new DIDAStorageNode { host = ParseHost(storagesNodes[i].url), port = ParsePort(storagesNodes[i].url), serverId = storagesNodes[i].serverId };
+            }
+
+            DIDAMetaRecord meta = prevMeta;
+
+            StorageProxy proxy = new StorageProxy(storageNodesArray, meta);
+
             try
             {
                 string className = req.chain[req.next].op.classname;
 
                 DIDAWorker.IDIDAOperator _op = ExtractOperator(className);
 
-                DIDAMetaRecord meta = new DIDAMetaRecord { Id = req.meta.Id };
-
-                DIDAStorageNode[] storageNodesArray = new DIDAStorageNode[storagesNodes.Count];
-
-                for (int i = 0; i < storagesNodes.Count; i++)
-                {
-                    storageNodesArray[i] = new DIDAStorageNode { host = ParseHost(storagesNodes[i].url), port = ParsePort(storagesNodes[i].url), serverId = storagesNodes[i].serverId }; 
-                }
-                   
-                _op.ConfigureStorage(new StorageProxy(storageNodesArray, meta));
+                _op.ConfigureStorage(proxy);
 
                 string previouOutput = req.next == 0 ? "" : req.chain[req.next - 1].output;
 
@@ -86,6 +87,10 @@ namespace WorkerNode
                 Console.WriteLine("Exception: ", e);
                 // TODO: handle this case, warn PuppetMaster
             }
+
+            newMeta = proxy.GetMetaRecord();
+
+            Thread.Sleep(responseDelay);
             return output;
         }
 

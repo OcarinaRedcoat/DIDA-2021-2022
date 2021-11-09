@@ -18,9 +18,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+	  <Protobuf Include="Protos\Struct.proto" />
       <Protobuf Include="Protos\DIDAStorage.proto" GrpcServices="Client" />
 	  <Protobuf Include="Protos\WorkerNodeToPuppetMaster.proto" GrpcServices="Client" />
-	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Client Server" />
+	  <Protobuf Include="Protos\WorkerService.proto" GrpcServices="Client Server" ProtoRoot="Protos\" />
 	  <Protobuf Include="Protos\Status.proto" GrpcServices="Server" />
 	  <Protobuf Include="Protos\SetupWorkerStorages.proto" GrpcServices="Server" />
   </ItemGroup>

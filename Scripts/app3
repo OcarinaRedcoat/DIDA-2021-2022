@@ -1,1 +1,4 @@
 operator AddOperator 0
+operator AddOperator 1
+operator AddOperator 2
+operator AddOperator 3

@@ -1,1 +1,6 @@
-﻿
+﻿syntax = "proto3";
+
+message DIDAVersion {
+	int32 versionNumber = 1;
+	int32 replicaId = 2;
+}

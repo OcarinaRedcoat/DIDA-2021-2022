@@ -57,7 +57,8 @@ namespace WorkerNode
             };
 
             // Call logic operation
-            req.chain[req.next].output = workerNodeLogic.ProcessOperator(req);
+            DIDAMetaRecord newMeta;
+            req.chain[req.next].output = workerNodeLogic.ProcessOperator(req, grpcMeta, out newMeta);
 
             req.next++;
 
@@ -71,7 +72,7 @@ namespace WorkerNode
                 string url = "http://" +  req.chain[req.next].host + ":" + req.chain[req.next].port;
                 GrpcChannel channelAux = GrpcChannel.ForAddress(url);
                 var client = new WorkerService.WorkerServiceClient(channelAux);
-                ProcessOperatorRequest newReq = GenerateRequest(req);
+                ProcessOperatorRequest newReq = GenerateRequest(req, newMeta);
                 client.ProcessOperatorAsync(newReq);
             }
 
@@ -82,16 +83,17 @@ namespace WorkerNode
             };
         }
 
-        public ProcessOperatorRequest GenerateRequest(DIDAWorker.DIDARequest req)
+        public ProcessOperatorRequest GenerateRequest(DIDAWorker.DIDARequest req, DIDAMetaRecord grpcMeta)
         {
-            DIDAMetaRecord metaRecord = new DIDAMetaRecord
+            Console.WriteLine("GENERATE REQUEST: " + grpcMeta.Id);
+            foreach (KeyVersionAccess access in grpcMeta.PreviousAccessed)
             {
-                Id = req.meta.Id
-            };
+                Console.WriteLine("K: " + access.Key + " - V: " + access.Version.VersionNumber + " : " + access.Version.ReplicaId);
+            }
 
             ProcessOperatorRequest newReq = new ProcessOperatorRequest
             {
-                Meta = metaRecord,
+                Meta = grpcMeta,
                 Input = req.input,
                 Next = req.next,
                 ChainSize = req.chainSize

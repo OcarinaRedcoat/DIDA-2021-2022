@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "Struct.proto";
 
 // Schedular to WorkerNode & WorkerNodeToWorkerNode
 
@@ -6,9 +7,15 @@ service WorkerService {
 	rpc ProcessOperator(ProcessOperatorRequest) returns (ProcessOperatorReply) {}
 }
 
+message KeyVersionAccess {
+	string key = 1;
+	DIDAVersion version = 2;
+}
+
 message DIDAMetaRecord {
 	int32 id = 1;
 	// other metadata to be specified by the students
+	repeated KeyVersionAccess previousAccessed = 2;
 }
 
 message DIDAOperatorID {
