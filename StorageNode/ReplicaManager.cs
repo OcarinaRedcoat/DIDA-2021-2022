@@ -64,6 +64,11 @@ namespace StorageNode
             {
                 for (int i = 0; i < replicaTimestamp[key].Count; i++)
                 {
+                    if (this.IsVersionEqual(replicaTimestamp[key][i], version))
+                    {
+                        inserted = true;
+                        break;
+                    }
                     if (this.IsVersionBigger(replicaTimestamp[key][i], version))
                     {
                         replicaTimestamp[key].Insert(i, version);
@@ -87,6 +92,11 @@ namespace StorageNode
             {
                 for (int i = 0; i < timeStampTable[replicaId][key].Count; i++)
                 {
+                    if (this.IsVersionEqual(replicaTimestamp[key][i], version))
+                    {
+                        inserted = true;
+                        break;
+                    }
                     if (this.IsVersionBigger(timeStampTable[replicaId][key][i], version))
                     {
                         timeStampTable[replicaId][key].Insert(i, version);
@@ -105,6 +115,11 @@ namespace StorageNode
                     timeStampTable[replicaId][key].RemoveAt(0);
                 }
             }
+        }
+
+        private bool IsVersionEqual(DIDAStorage.DIDAVersion dIDAVersion, DIDAStorage.DIDAVersion version)
+        {
+            return dIDAVersion.replicaId == version.replicaId && dIDAVersion.versionNumber == version.versionNumber;
         }
 
         public void ReplaceTimeStamp(int replicaId, RepeatedField<TimeStamp> timeStamp)

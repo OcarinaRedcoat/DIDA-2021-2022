@@ -31,7 +31,7 @@ namespace DIDAOperator
         string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
         {
             var val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "success", Oldvalue = previousOperatorOutput });
-            val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "failure", Oldvalue = previousOperatorOutput });
+            val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "yeaaaaaaaaaaaaaaaaaaaboyyyyyyyyyyyyyyyyyyyyyyyyyyy", Oldvalue = "success" });
 
             Console.WriteLine("updated record:" + input);
             return "end";

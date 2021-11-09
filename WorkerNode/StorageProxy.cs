@@ -200,6 +200,9 @@ namespace WorkerNode
                 try
                 {
                     Console.WriteLine("Calling UpdateIfValueIs on... " + sId);
+                    Console.WriteLine("Id: :" + r.Id);
+                    Console.WriteLine("newvalue: " + r.Newvalue);
+                    Console.WriteLine("oldvalue: " + r.Oldvalue);
                     DIDAStorageClient.DIDAVersion res = _clients[sId].updateIfValueIs(
                         new DIDAStorageClient.DIDAUpdateIfRequest
                         {

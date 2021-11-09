@@ -251,7 +251,6 @@ namespace StorageNode
                         }
                         else
                         {
-
                             //storage.Add(id, new List<DIDAStorage.DIDARecord>());
                             this.AddNewKey(id);
                             storage[id].Add(nextRecord);
@@ -262,6 +261,11 @@ namespace StorageNode
                             );
                         }
 
+                        Console.WriteLine("timestamp after uivi");
+                        foreach (DIDAStorage.DIDAVersion ts in this.replicaManager.GetReplicaTimeStamp(this.replicaId)[id])
+                        {
+                            Console.WriteLine("Didaversion versin num: " + ts.versionNumber + " :replica id: " + ts.replicaId );
+                        }
                         commitRequest = new CommitPhaseRequest
                         {
                             CanCommit = true,
@@ -309,6 +313,7 @@ namespace StorageNode
                 try
                 {
                     // await ???
+                    Console.WriteLine("uivi pre Commit phase version num " + commitRequest.Record.Version.VersionNumber);
                     storageNodes[sId].uiviClient.CommitPhaseAsync(commitRequest);
                 }
                 catch (RpcException e)
@@ -373,11 +378,13 @@ namespace StorageNode
             {
                 consensusLock[request.Record.Id] = false;
 
+                Console.WriteLine("Commit phase version num " + request.Record.Version.VersionNumber);
                 if (!this.storage.ContainsKey(request.Record.Id))
                 {
                     //this.storage.Add(request.Record.Id, new List<DIDAStorage.DIDARecord>());
                     this.AddNewKey(request.Record.Id);
 
+                        Console.WriteLine("Commit phase create ts id:" + request.Record.Id + " version: " + request.Record.Version);
                     this.replicaManager.CreateNewTimeStamp(this.replicaId, request.Record.Id, new DIDAStorage.DIDAVersion { versionNumber = -1, replicaId = -1 });
                 }
 
@@ -403,6 +410,7 @@ namespace StorageNode
                             this.storage[request.Record.Id].RemoveAt(0);
                         }
 
+                        Console.WriteLine("Commit phase add ts id:" + request.Record.Id + " version: " + request.Record.Version);
                         this.replicaManager.AddTimeStamp(replicaId, request.Record.Id, newVersion);
 
                         break;

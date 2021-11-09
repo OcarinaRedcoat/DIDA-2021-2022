@@ -1,9 +1,9 @@
 debug
 scheduler sc1 http://localhost:4000 0
-storage s1 http://localhost:3000 2000
-storage s2 http://localhost:3001 2000
-storage s3 http://localhost:3002 2000
+storage s1 http://localhost:3000 20000
+storage s2 http://localhost:3001 20000
+storage s3 http://localhost:3002 20000
 worker w1 http://localhost:4001 0
 worker w2 http://localhost:4002 0
 populate app2_data
-client 13 app3
+client 13 app2

@@ -69,11 +69,28 @@ namespace StorageNode
             return Task.FromResult(WriteSerialize(request.Id, request.Val));
         }
 
+
+
         public override Task<DIDAVersion> updateIfValueIs(DIDAUpdateIfRequest request, ServerCallContext context)
         {
-            storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
-            // TODO : implement
-            return base.updateIfValueIs(request, context);
+            return Task.FromResult(UpdateIfValueIsSerialize(request));
+                
+        }
+
+        public DIDAVersion UpdateIfValueIsSerialize(DIDAUpdateIfRequest request)
+        {
+            // Serialize Input
+
+            // Call logic operation
+            DIDAStorage.DIDAVersion version = storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
+
+            // Serialize Output
+
+            return new DIDAVersion
+            {
+                ReplicaId = version.replicaId,
+                VersionNumber = version.versionNumber
+            };
         }
     }
 

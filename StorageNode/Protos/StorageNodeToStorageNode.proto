@@ -20,8 +20,6 @@ message GossipReply {
 	repeated TimeStamp replicaTimestamp = 1;
 }
 
-
-
 service UpdateIfValueIsService {
 	rpc LockAndPull(LockAndPullRequest) returns (LockAndPullReply) {}
 	rpc CommitPhase(CommitPhaseRequest) returns (CommitPhaseReply) {}
