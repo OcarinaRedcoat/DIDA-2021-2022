@@ -57,6 +57,18 @@ namespace StorageNode
             }
         }
 
+        public void CreateNewEmptyTimeStamp(int replicaId, string key)
+        {
+            if (replicaId == this.myReplicaId)
+            {
+                replicaTimestamp.Add(key, new List<DIDAStorage.DIDAVersion>());
+            }
+            else
+            {
+                timeStampTable[replicaId].Add(key, new List<DIDAStorage.DIDAVersion>());
+            }
+        }
+
         public void AddTimeStamp(int replicaId, string key, DIDAStorage.DIDAVersion version)
         {
             bool inserted = false;
@@ -117,7 +129,7 @@ namespace StorageNode
             }
         }
 
-        private bool IsVersionEqual(DIDAStorage.DIDAVersion dIDAVersion, DIDAStorage.DIDAVersion version)
+        public bool IsVersionEqual(DIDAStorage.DIDAVersion dIDAVersion, DIDAStorage.DIDAVersion version)
         {
             return dIDAVersion.replicaId == version.replicaId && dIDAVersion.versionNumber == version.versionNumber;
         }
