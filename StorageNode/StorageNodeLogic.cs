@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace StorageNode
 {
-    class StorageNodeLogic : IDIDAStorage
+    class StorageNodeLogic 
     {
         public static int MAX_VERSIONS_STORED = 5;
 
@@ -109,7 +109,7 @@ namespace StorageNode
             return value;
         }
 
-        public DIDAStorage.DIDAVersion UpdateIfValueIs(string id, string oldvalue, string newvalue)
+        public async Task<DIDAVersion> UpdateIfValueIs(string id, string oldvalue, string newvalue)
         {
             lock (this)
             {
@@ -120,10 +120,10 @@ namespace StorageNode
                 }
                 if (consensusLock[id])
                 {
-                    return new DIDAStorage.DIDAVersion
+                    return new DIDAVersion
                     {
-                        replicaId = -1,
-                        versionNumber = -1
+                        ReplicaId = -1,
+                        VersionNumber = -1
                     };
                 }
                 consensusLock[id] = true;
@@ -139,7 +139,9 @@ namespace StorageNode
             ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
             List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(id);
 
-            // List<AsyncUnaryCall<LockAndPullReply>> lockingTasks = new List<AsyncUnaryCall<LockAndPullReply>>();
+            List<AsyncUnaryCall<LockAndPullReply>> lockingTasks = new List<AsyncUnaryCall<LockAndPullReply>>();
+
+
             List<LockAndPullReply> replies = new List<LockAndPullReply>();
             LockAndPullRequest lockRequest = new LockAndPullRequest
             {
@@ -153,7 +155,8 @@ namespace StorageNode
 
                 try
                 {
-                    replies.Add(storageNodes[sId].uiviClient.LockAndPull(lockRequest));
+                    //replies.Add(storageNodes[sId].uiviClient.LockAndPull(lockRequest));
+                    lockingTasks.Add(storageNodes[sId].uiviClient.LockAndPullAsync(lockRequest));
                 }
                 catch (RpcException e)
                 {
@@ -161,58 +164,70 @@ namespace StorageNode
                     // if (e.StatusCode == StatusCode.)
                 }
 
-                // lockingTasks.Add(storageNodes[sId].uiviClient.LockAndPullAsync(request));
             }
 
             // TODO: TIMEOUTSS
 
-            // await Task.WhenAll(lockingTasks.Select(res => res.ResponseAsync));
-
             bool abort = false;
+
+            foreach(AsyncUnaryCall<LockAndPullReply> call in lockingTasks)
+            {
+                try
+                {
+                    replies.Add(await call.ResponseAsync);
+                }
+                catch
+                {
+                    abort = true;
+                }
+            }
+
+            //await Task.WhenAll(lockingTasks.Select(res => res.ResponseAsync));
+
             CommitPhaseRequest commitRequest;
             DIDAStorage.DIDAVersion nextVersion;
+            DIDARecord maxRecord = new DIDARecord
+            {
+                Id = id,
+                Val = "1",
+                Version = new DIDAVersion
+                {
+                    VersionNumber = -1,
+                    ReplicaId = -1
+                }
+            };
             lock (this)
             {
-                // This replica starts being the max version
-                DIDARecord maxRecord;
-                if (this.storage[id].Count > 0)
+                if (!abort)
                 {
-                    DIDAStorage.DIDARecord record = this.storage[id][this.storage[id].Count - 1];
-                    maxRecord = new DIDARecord
-                    {
-                        Id = record.id,
-                        Val = record.val,
-                        Version = new DIDAVersion
-                        {
-                            VersionNumber = record.version.versionNumber,
-                            ReplicaId = record.version.replicaId
-                        }
-                    };
-                }
-                else
-                {
-                    maxRecord = new DIDARecord
-                    {
-                        Id = id,
-                        Val = "1",
-                        Version = new DIDAVersion
-                        {
-                            VersionNumber = -1,
-                            ReplicaId = -1
-                        }
-                    };
-                }
 
-                foreach (LockAndPullReply reply in replies)
-                {
-                    if (reply.AlreadyLocked)
+                    // This replica starts being the max version
+                    if (this.storage[id].Count > 0)
                     {
-                        abort = true;
-                        break;
+                        DIDAStorage.DIDARecord record = this.storage[id][this.storage[id].Count - 1];
+                        maxRecord = new DIDARecord
+                        {
+                            Id = record.id,
+                            Val = record.val,
+                            Version = new DIDAVersion
+                            {
+                                VersionNumber = record.version.versionNumber,
+                                ReplicaId = record.version.replicaId
+                            }
+                        };
                     }
-                    if (this.replicaManager.IsVersionBigger(reply.Record.Version, maxRecord.Version))
+
+                    foreach (LockAndPullReply reply in replies)
                     {
-                        maxRecord = reply.Record;
+                        if (reply.AlreadyLocked)
+                        {
+                            abort = true;
+                            break;
+                        }
+                        if (this.replicaManager.IsVersionBigger(reply.Record.Version, maxRecord.Version))
+                        {
+                            maxRecord = reply.Record;
+                        }
                     }
                 }
 
@@ -304,7 +319,11 @@ namespace StorageNode
                 }
             }
 
-            return nextVersion;
+            return new DIDAVersion
+            {
+                VersionNumber = nextVersion.versionNumber,
+                ReplicaId = nextVersion.replicaId
+            };
         }
 
         public LockAndPullReply LockAndPull(LockAndPullRequest request)
@@ -325,6 +344,7 @@ namespace StorageNode
                     return new LockAndPullReply { AlreadyLocked = true };
                 }
                 consensusLock[request.Key] = true;
+                // TODO timeout between here and the commit phase
 
                 if (this.storage[request.Key].Count > 0)
                 {
@@ -367,7 +387,7 @@ namespace StorageNode
                     this.AddNewKey(request.Record.Id);
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, request.Record.Id);
                 }
-                
+
                 if (!request.CanCommit)
                 {
                     consensusLock[request.Record.Id] = false;

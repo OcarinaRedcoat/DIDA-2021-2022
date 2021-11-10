@@ -6,5 +6,4 @@ storage s3 http://localhost:3002 20000
 worker w1 http://localhost:4001 0
 worker w2 http://localhost:4002 0
 populate app2_data
-client 10000 app2
 client 13 app2

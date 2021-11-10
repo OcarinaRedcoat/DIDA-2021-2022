@@ -73,11 +73,11 @@ namespace StorageNode
 
         public override Task<DIDAVersion> updateIfValueIs(DIDAUpdateIfRequest request, ServerCallContext context)
         {
-            return Task.FromResult(UpdateIfValueIsSerialize(request));
+            return  storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
                 
         }
 
-        public DIDAVersion UpdateIfValueIsSerialize(DIDAUpdateIfRequest request)
+        /*public DIDAVersion UpdateIfValueIsSerialize(DIDAUpdateIfRequest request)
         {
             // Serialize Input
 
@@ -91,7 +91,7 @@ namespace StorageNode
                 ReplicaId = version.replicaId,
                 VersionNumber = version.versionNumber
             };
-        }
+        }*/
     }
 
     class PuppetMasterStorageService : PMStorageService.PMStorageServiceBase
