@@ -137,14 +137,11 @@ namespace StorageNode
         public void ReplaceTimeStamp(int replicaId, RepeatedField<TimeStamp> timeStamp)
         {
             Dictionary<string, List<DIDAStorage.DIDAVersion>> newReplicaTimestamp = new Dictionary<string, List<DIDAStorage.DIDAVersion>>();
-            Console.WriteLine("ReplaceTimeStamp!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             foreach (TimeStamp ts in timeStamp)
             {
-                Console.WriteLine("TS: KEY" + ts.Key + "==>");
                 newReplicaTimestamp.Add(ts.Key, new List<DIDAStorage.DIDAVersion>());
                 foreach (DIDAVersion grpcVersion in ts.Timestamp)
                 {
-                    Console.WriteLine("      TS VERSION: " + grpcVersion.VersionNumber + " : " + grpcVersion.ReplicaId);
                     DIDAStorage.DIDAVersion version = new DIDAStorage.DIDAVersion
                     {
                         replicaId = grpcVersion.ReplicaId,

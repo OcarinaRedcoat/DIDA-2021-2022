@@ -233,8 +233,6 @@ namespace StorageNode
 
                     if (maxRecord.Val == oldvalue) // If VALUE IS
                     {
-                        // if (storage.ContainsKey(id))
-                        // {
                         List<DIDAStorage.DIDARecord> items = storage[id];
                         // If Queue is full
                         if (items.Count == MAX_VERSIONS_STORED)
@@ -243,26 +241,7 @@ namespace StorageNode
                         }
                         items.Add(nextRecord);
                         this.replicaManager.AddTimeStamp(this.replicaId, id, nextVersion);
-                        // }
-                        /*
-                        else
-                        {
-                            //storage.Add(id, new List<DIDAStorage.DIDARecord>());
-                            this.AddNewKey(id);
-                            storage[id].Add(nextRecord);
-                            this.replicaManager.CreateNewTimeStamp(
-                                this.replicaId,
-                                id,
-                                nextVersion
-                            );
-                        }
-                        */
 
-                        Console.WriteLine("timestamp after uivi");
-                        foreach (DIDAStorage.DIDAVersion ts in this.replicaManager.GetReplicaTimeStamp(this.replicaId)[id])
-                        {
-                            Console.WriteLine("Didaversion versin num: " + ts.versionNumber + " :replica id: " + ts.replicaId );
-                        }
                         commitRequest = new CommitPhaseRequest
                         {
                             CanCommit = true,
@@ -317,7 +296,6 @@ namespace StorageNode
                 try
                 {
                     // await ???
-                    Console.WriteLine("uivi pre Commit phase version num " + commitRequest.Record.Version.VersionNumber);
                     storageNodes[sId].uiviClient.CommitPhaseAsync(commitRequest);
                 }
                 catch (RpcException e)
