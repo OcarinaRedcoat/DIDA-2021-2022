@@ -4,6 +4,7 @@ using System.Text;
 using DIDAStorageClient;
 using DIDAWorker;
 using CHashing;
+using System.Threading;
 
 namespace WorkerNode
 {
@@ -129,6 +130,8 @@ namespace WorkerNode
                 }
             }
             // res = _clients["s1"].read(new DIDAStorageClient.DIDAReadRequest { Id = r.Id, Version = new DIDAStorageClient.DIDAVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
+            Console.WriteLine("READ NOT FOUND ABORTING");
+            Thread.CurrentThread.Abort();
             return new DIDAWorker.DIDARecordReply { Id = "1", Val = "1", Version = { VersionNumber = -1, ReplicaId = -1 } };
         }
 
@@ -187,6 +190,9 @@ namespace WorkerNode
             }
             // var res = _clients["s1"].write(new DIDAStorageClient.DIDAWriteRequest { Id = r.Id, Val = r.Val });
             // return new DIDAWorker.DIDAVersion { VersionNumber = res.VersionNumber, ReplicaId = res.ReplicaId };
+
+            Console.WriteLine("WRITE NOT POSSIBLE ABORTING");
+            Thread.CurrentThread.Abort();
             return new DIDAWorker.DIDAVersion { VersionNumber = -1, ReplicaId = -1 };
         }
 
@@ -237,6 +243,8 @@ namespace WorkerNode
                     Console.WriteLine(e.Message);
                 }
             }
+            Console.WriteLine("UPDATE IF VALUE IS NOT POSSIBLE ABORTING");
+            Thread.CurrentThread.Abort();
             return new DIDAWorker.DIDAVersion { VersionNumber = -1, ReplicaId = -1 };
         }
 
