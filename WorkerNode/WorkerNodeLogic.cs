@@ -84,7 +84,6 @@ namespace WorkerNode
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception: ", e);
                 Thread.CurrentThread.Abort();
                 // TODO: handle this case, warn PuppetMaster
             }

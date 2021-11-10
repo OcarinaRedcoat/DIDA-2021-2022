@@ -15,11 +15,12 @@ namespace StorageNode
     class StorageNodeLogic 
     {
         public static int MAX_VERSIONS_STORED = 5;
+        public static int CONSENSUS_TIMEOUT = 5000;
 
         private Dictionary<string, StorageNodeStruct> storageNodes = new Dictionary<string, StorageNodeStruct>();
 
         // if uivi cant write key during consensus
-        private Dictionary<string, bool> consensusLock = new Dictionary<string, bool>();
+        private Dictionary<string, ConsensusKeyLock> consensusLock = new Dictionary<string, ConsensusKeyLock>();
 
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
@@ -36,13 +37,12 @@ namespace StorageNode
             this.gossipDelay = gossipDelay;
             this.replicaManager = new ReplicaManager(this.replicaId, MAX_VERSIONS_STORED);
             this.timer = new Timer();
-            timer.Interval = gossipDelay;
+            timer.Interval = this.gossipDelay;
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             timer.AutoReset = true;
             timer.Enabled = false;
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         }
-
 
         public StatusReply Status()
         {
@@ -59,7 +59,6 @@ namespace StorageNode
                     }
                 }
             }
-
             return new StatusReply { };
         }
 
@@ -87,7 +86,7 @@ namespace StorageNode
                     { // Null version
                         int size = recordValues.Count;
                         value = recordValues[size - 1];
-                        // We suppose the list is ordered
+                        // The list is ordered
                     }
                     else
                     { // Specified version
@@ -118,7 +117,7 @@ namespace StorageNode
                     this.AddNewKey(id);
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, id);
                 }
-                if (consensusLock[id])
+                if (consensusLock[id].locked)
                 {
                     return new DIDAVersion
                     {
@@ -126,27 +125,23 @@ namespace StorageNode
                         VersionNumber = -1
                     };
                 }
-                consensusLock[id] = true;
+                consensusLock[id].SetLocked(true);
             }
 
-            // storageNodes never edited
+            // storageNodes are never removed, so we can always use a new Consistent Hashing instance
             List<string> storageIds = new List<string>();
             foreach (StorageNodeStruct sns in storageNodes.Values)
             {
                 storageIds.Add(sns.serverId);
             }
             storageIds.Add(this.serverId);
+
             ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
             List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(id);
 
             List<AsyncUnaryCall<LockAndPullReply>> lockingTasks = new List<AsyncUnaryCall<LockAndPullReply>>();
-
-
             List<LockAndPullReply> replies = new List<LockAndPullReply>();
-            LockAndPullRequest lockRequest = new LockAndPullRequest
-            {
-                Key = id
-            };
+            LockAndPullRequest lockRequest = new LockAndPullRequest { Key = id };
 
             foreach (string sId in setOfReplicas)
             {
@@ -155,7 +150,6 @@ namespace StorageNode
 
                 try
                 {
-                    //replies.Add(storageNodes[sId].uiviClient.LockAndPull(lockRequest));
                     lockingTasks.Add(storageNodes[sId].uiviClient.LockAndPullAsync(lockRequest));
                 }
                 catch (RpcException e)
@@ -166,23 +160,19 @@ namespace StorageNode
 
             }
 
-            // TODO: TIMEOUTSS
-
-            bool abort = false;
-
-            foreach(AsyncUnaryCall<LockAndPullReply> call in lockingTasks)
+            // Await for all lock requests
+            bool replicaDown = false;
+            foreach (AsyncUnaryCall<LockAndPullReply> call in lockingTasks)
             {
                 try
                 {
                     replies.Add(await call.ResponseAsync);
                 }
-                catch
+                catch (RpcException e)
                 {
-                    abort = true;
+                    replicaDown = true;
                 }
             }
-
-            //await Task.WhenAll(lockingTasks.Select(res => res.ResponseAsync));
 
             CommitPhaseRequest commitRequest;
             DIDAStorage.DIDAVersion nextVersion;
@@ -196,11 +186,13 @@ namespace StorageNode
                     ReplicaId = -1
                 }
             };
+
             lock (this)
             {
-                if (!abort)
-                {
+                bool abort = false;
 
+                if (!replicaDown)
+                {
                     // This replica starts being the max version
                     if (this.storage[id].Count > 0)
                     {
@@ -298,9 +290,8 @@ namespace StorageNode
                         replicaId = -1,
                         versionNumber = -1
                     };
-
                 }
-                consensusLock[id] = false;
+                consensusLock[id].SetLocked(false);
             }
 
             foreach (string sId in setOfReplicas)
@@ -310,7 +301,6 @@ namespace StorageNode
 
                 try
                 {
-                    // await ???
                     storageNodes[sId].uiviClient.CommitPhaseAsync(commitRequest);
                 }
                 catch (RpcException e)
@@ -330,7 +320,6 @@ namespace StorageNode
         {
             DIDARecord maxRecord;
 
-            //TODO add timeout
             lock (this)
             {
                 if (!this.storage.ContainsKey(request.Key))
@@ -339,12 +328,11 @@ namespace StorageNode
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, request.Key);
                 }
 
-                if (consensusLock[request.Key])
+                if (consensusLock[request.Key].locked)
                 {
                     return new LockAndPullReply { AlreadyLocked = true };
                 }
-                consensusLock[request.Key] = true;
-                // TODO timeout between here and the commit phase
+                consensusLock[request.Key].SetLocked(true);
 
                 if (this.storage[request.Key].Count > 0)
                 {
@@ -375,6 +363,7 @@ namespace StorageNode
                 }
             }
 
+            this.consensusLock[request.Key].timer.Start();
             return new LockAndPullReply { AlreadyLocked = false, Record = maxRecord };
         }
 
@@ -382,15 +371,18 @@ namespace StorageNode
         {
             lock (this)
             {
+
                 if (!this.storage.ContainsKey(request.Record.Id))
                 {
                     this.AddNewKey(request.Record.Id);
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, request.Record.Id);
                 }
 
+                this.consensusLock[request.Record.Id].timer.Stop();
+
                 if (!request.CanCommit)
                 {
-                    consensusLock[request.Record.Id] = false;
+                    consensusLock[request.Record.Id].SetLocked(false);
                     return new CommitPhaseReply { Okay = true };
                 }
 
@@ -437,7 +429,7 @@ namespace StorageNode
                     this.storage[request.Record.Id].RemoveAt(0);
                 }
 
-                consensusLock[request.Record.Id] = false;
+                consensusLock[request.Record.Id].SetLocked(false);
             }
 
             return new CommitPhaseReply { Okay = true };
@@ -451,7 +443,7 @@ namespace StorageNode
             lock (this)
             {
 
-                if (consensusLock[id])
+                if (consensusLock[id].locked)
                 {
                     return new DIDAStorage.DIDAVersion
                     {
@@ -529,9 +521,6 @@ namespace StorageNode
                 record.val = pair.Value;
                 record.version = version;
 
-                //List<DIDAStorage.DIDARecord> listRecords = new List<DIDAStorage.DIDARecord>();
-                //listRecords.Add(record);
-                //storage.Add(pair.Key, listRecords);
                 this.AddNewKey(record.id);
                 this.storage[record.id].Add(record);
 
@@ -708,7 +697,6 @@ namespace StorageNode
 
                     if (!this.storage.ContainsKey(update.Id))
                     {
-                        //this.storage.Add(update.Id, new List<DIDAStorage.DIDARecord>());
                         this.AddNewKey(update.Id);
                         this.replicaManager.CreateNewEmptyTimeStamp(otherReplicaId, update.Id);
                     }
@@ -775,12 +763,30 @@ namespace StorageNode
             return reply;
         }
 
-
+        public void FreeConsensusKey(string key)
+        {
+            Console.WriteLine("[ TIMEOUT ] - Free lock on key: " + key);
+            this.consensusLock[key].SetLocked(false);
+        }
 
         private void AddNewKey(string key)
         {
             this.storage.Add(key, new List<DIDAStorage.DIDARecord>());
-            this.consensusLock.Add(key, false);
+            this.consensusLock.Add(key, new ConsensusKeyLock
+            { 
+                locked = false,
+                timer = new Timer
+                {
+                    Interval = CONSENSUS_TIMEOUT,
+                    AutoReset = false,
+                    Enabled = false
+                }
+            });
+
+            ElapsedEventHandler handler = ((sender, args) => {
+                this.FreeConsensusKey(key);
+            });
+            this.consensusLock[key].timer.Elapsed += handler;
         }
     }
     public struct StorageNodeStruct
@@ -791,5 +797,16 @@ namespace StorageNode
         public GrpcChannel channel;
         public GossipService.GossipServiceClient gossipClient;
         public UpdateIfValueIsService.UpdateIfValueIsServiceClient uiviClient;
+    }
+
+    public struct ConsensusKeyLock
+    {
+        public bool locked;
+        public Timer timer;
+
+        public void SetLocked(bool value)
+        {
+            this.locked = value;
+        }
     }
 }
