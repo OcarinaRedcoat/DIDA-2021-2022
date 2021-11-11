@@ -41,8 +41,8 @@ namespace Scheduler
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 
-            Console.WriteLine("Starting Worker Node Server");
-            Console.WriteLine("ServerId: " + this.serverId + " Host: " + this.host + " Port: " + this.port);
+            Console.WriteLine("[ LOG ] : Starting Worker Node Server");
+            Console.WriteLine("[ LOG ] : ServerId: " + this.serverId + " Host: " + this.host + " Port: " + this.port);
             server.Start();
         }
 

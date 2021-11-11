@@ -57,7 +57,6 @@ namespace StorageNode
                 node.gossipClient = new GossipService.GossipServiceClient(node.channel);
                 node.uiviClient = new UpdateIfValueIsService.UpdateIfValueIsServiceClient(node.channel);
 
-                Console.WriteLine("Added Storage server Id: " + node.serverId);
                 storageNodes.Add(node.serverId, node);
 
                 this.replicaManager.AddStorageReplica(node.replicaId);
@@ -92,7 +91,7 @@ namespace StorageNode
                     }
                 );
 
-                Console.WriteLine("Stored!! Key: " + pair.Key + " Value: " + storage[pair.Key][0].val + " Id: " + storage[pair.Key][0].id + " Version Number: " + storage[pair.Key][0].version.versionNumber + " Replica Id: " + storage[pair.Key][0].version.replicaId);
+                Console.WriteLine("[ POPULATE ] : Stored!! Key: " + pair.Key + " Value: " + storage[pair.Key][0].val + " Id: " + storage[pair.Key][0].id + " Version Number: " + storage[pair.Key][0].version.versionNumber + " Replica Id: " + storage[pair.Key][0].version.replicaId);
             }
 
             return new PopulateReply { Okay = true };
@@ -121,14 +120,14 @@ namespace StorageNode
         {
             lock (storage)
             {
-                Console.WriteLine("This is my Status: " + replicaId);
+                Console.WriteLine("[ STATUS ] : This is my Status: " + replicaId);
 
                 foreach (KeyValuePair<string, List<DIDAStorage.DIDARecord>> pair in storage)
                 {
-                    Console.WriteLine("Key: " + pair.Key);
+                    Console.WriteLine("[ STATUS ] : Key: " + pair.Key);
                     foreach (DIDAStorage.DIDARecord rec in pair.Value)
                     {
-                        Console.WriteLine("Value: " + rec.val + ", Version: (" + rec.version.versionNumber + ", " + rec.version.replicaId + ")");
+                        Console.WriteLine("[ STATUS ] : Value: " + rec.val + ", Version: (" + rec.version.versionNumber + ", " + rec.version.replicaId + ")");
                     }
                 }
             }
@@ -151,7 +150,7 @@ namespace StorageNode
 
             lock (this)
             {
-                Console.WriteLine("Reading... " + id);
+                Console.WriteLine("[ LOG ] : Reading... " + id);
 
                 if (storage.TryGetValue(id, out recordValues))
                 {
@@ -203,7 +202,7 @@ namespace StorageNode
                     this.startedGossip = true;
                     timer.Start();
                 }
-                Console.WriteLine("Writing... " + id + " - " + val);
+                Console.WriteLine("[ LOG ] : Writing... " + id + " - " + val);
 
                 // Get the greater version
                 int greaterVersionNumber = 0;
@@ -240,7 +239,6 @@ namespace StorageNode
                 }
                 else
                 {
-                    //storage.Add(id, new List<DIDAStorage.DIDARecord>());
                     this.AddNewKey(id);
                     storage[id].Add(didaRecord);
                     this.replicaManager.CreateNewTimeStamp(
@@ -275,6 +273,8 @@ namespace StorageNode
                 consensusLock[id].SetLocked(true);
             }
 
+            Console.WriteLine("[ LOG ] : Updating If Value Is... ID: " + id + " OldValue: " + oldvalue + " NewValue: " + newvalue);
+
             // storageNodes are never removed, so we can always use a new Consistent Hashing instance
             List<string> storageIds = new List<string>();
             foreach (StorageNodeStruct sns in storageNodes.Values)
@@ -308,7 +308,7 @@ namespace StorageNode
                     }
                     else
                     {
-                        Console.WriteLine("GRPC Exception with Status Code: " + e.StatusCode);
+                        Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
                     }
                 }
 
@@ -467,7 +467,7 @@ namespace StorageNode
                     }
                     else
                     {
-                        Console.WriteLine("GRPC Exception with Status Code: " + e.StatusCode);
+                        Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
                     }
                 }
             }
@@ -599,7 +599,7 @@ namespace StorageNode
 
         private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
         {
-            Console.WriteLine("Calling Gossip...");
+            Console.WriteLine("[ LOG ] : Calling Gossip...");
             this.Gossip();
         }
 
@@ -684,7 +684,7 @@ namespace StorageNode
                         GossipRequest request = gossipRequests[requestServerId];
                         if (request.UpdateLogs.Count > 0)
                         {
-                            Console.WriteLine("============>>> REQUESTT <<<<========================= ServerId: " + requestServerId);
+                            Console.WriteLine("[ REQUEST ] Request from ServerId: " + requestServerId);
                             GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
                             this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
                         }
@@ -697,7 +697,7 @@ namespace StorageNode
                         }
                         else
                         {
-                            Console.WriteLine("GRPC Exception with Status Code: " + e.StatusCode);
+                            Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
                         }
                     }
                 }
@@ -706,7 +706,7 @@ namespace StorageNode
 
         public GossipReply ReceiveGossip(GossipRequest request)
         {
-            Console.WriteLine("Receive Gossip from: " + request.ReplicaId);
+            Console.WriteLine("[ GOSSIP ] : Receive Gossip from: " + request.ReplicaId);
             Dictionary<string, List<DIDAStorage.DIDAVersion>> myReplicaTimestamp;
             lock (this)
             {

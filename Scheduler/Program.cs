@@ -6,7 +6,9 @@ namespace Scheduler
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World from Schedular!");
+            Console.WriteLine("========================================================================");
+            Console.WriteLine("[ STARTING ] : Scheduler!");
+            Console.WriteLine("========================================================================");
 
             var schedulerId = args[0];
             var host = ExtractHostFromArg(args[1]);

@@ -56,7 +56,6 @@ namespace StorageNode
             DIDAStorage.DIDAVersion version = storageNodeLogic.Write(id, value);
 
             // Serialize Output
-
             return new DIDAVersion
             {
                 ReplicaId = version.replicaId,
@@ -69,29 +68,12 @@ namespace StorageNode
             return Task.FromResult(WriteSerialize(request.Id, request.Val));
         }
 
-
-
         public override Task<DIDAVersion> updateIfValueIs(DIDAUpdateIfRequest request, ServerCallContext context)
         {
             return  storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
                 
         }
 
-        /*public DIDAVersion UpdateIfValueIsSerialize(DIDAUpdateIfRequest request)
-        {
-            // Serialize Input
-
-            // Call logic operation
-            DIDAStorage.DIDAVersion version = storageNodeLogic.UpdateIfValueIs(request.Id, request.Oldvalue, request.Newvalue);
-
-            // Serialize Output
-
-            return new DIDAVersion
-            {
-                ReplicaId = version.replicaId,
-                VersionNumber = version.versionNumber
-            };
-        }*/
     }
 
     class PuppetMasterStorageService : PMStorageService.PMStorageServiceBase
@@ -223,8 +205,8 @@ namespace StorageNode
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 
-            Console.WriteLine("Starting Storage Node Server");
-            Console.WriteLine("ServerId: " + this.serverId + " Host: " + this.host + " Port: " + this.port);
+            Console.WriteLine("[ LOG ] : Starting Storage Node Server");
+            Console.WriteLine("[ LOG ] : ServerId: " + this.serverId + " Host: " + this.host + " Port: " + this.port);
             server.Start();
         }
 

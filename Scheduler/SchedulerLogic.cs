@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using Grpc.Core;
+using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -39,9 +40,9 @@ namespace Scheduler
                 WorkerNodeStruct worker = workerNodes[workerUrl];
                 worker.client.ProcessOperatorAsync(request);
             }
-            catch (Exception e)
+            catch (RpcException e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("[ ERROR ] - ProcessOperatorAsync Request Status code: " + e.StatusCode);
                 return new RunApplicationReply { Okay = false };
             }
 
@@ -83,7 +84,7 @@ namespace Scheduler
                 workerNodes.TryAdd(worker.getUrl(), worker);
             }
 
-            Console.WriteLine("Added WorkerId: " + workerId + " Host: " + worker.host + " Port: " + worker.port);
+            Console.WriteLine("[ LOG ] : Added WorkerId: " + workerId + " Host: " + worker.host + " Port: " + worker.port);
 
             return new AddWorkerNodeReply { Okay = true };
         }

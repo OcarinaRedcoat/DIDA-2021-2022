@@ -54,7 +54,7 @@ namespace DIDAOperator
             Console.Write("[ AddOperator ] : Reading data record: " + input + " with value: ");
             var val = _storageProxy.read(new DIDAReadRequest { Id = input, Version = new DIDAVersion { VersionNumber = -1, ReplicaId = -1 } });
             string storedString = val.Val;
-            Console.WriteLine(storedString);
+            Console.WriteLine("[ AddOperator ] : Stored string -> " + storedString);
             int requestCounter;
             string output;
             try
@@ -75,7 +75,7 @@ namespace DIDAOperator
             Console.Write("[ AddOperator ] : Reading data record: " + oneAhead + " with value: ");
             _storageProxy.read(new DIDAReadRequest { Id = oneAhead.ToString(), Version = new DIDAVersion { VersionNumber = -1, ReplicaId = -1 } });
             storedString = val.Val;
-            Console.WriteLine(storedString);
+            Console.WriteLine("[ AddOperator ] : Stored string -> " + storedString);
 
 
             _storageProxy.write(new DIDAWriteRequest { Id = input, Val = output });

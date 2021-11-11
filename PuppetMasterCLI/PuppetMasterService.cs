@@ -16,7 +16,7 @@ namespace PuppetMasterCLI
 
         public LogReply log(string workerId, string message)
         {
-            Console.WriteLine("LOG: WorkerId(" + workerId + ") : " + message);
+            Console.WriteLine("[ LOG SERVER ] : WorkerId(" + workerId + ") : " + message);
             return new LogReply
             {
                 Okay = true

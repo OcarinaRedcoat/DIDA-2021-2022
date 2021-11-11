@@ -15,6 +15,11 @@ namespace WorkerNode
             bool debug = Int32.Parse(args[3]).Equals(1);
             string logURL = args[4];
 
+            Console.WriteLine("========================================================================");
+            Console.WriteLine("[ STARTING ] : Worker Node!");
+            Console.WriteLine("[ STARTING ] : ServerId: " + serverId);
+            Console.WriteLine("========================================================================");
+
             WorkerNodeLogic workerNodeLogic = new WorkerNodeLogic(serverId, delay, debug, logURL);
             WorkerServer workerServer = new WorkerServer(serverId, host, port, ref workerNodeLogic);
 

@@ -10,7 +10,9 @@ namespace PCS
         {
             PCSLogic pcsLogic = new PCSLogic();
             var server = new PCSServer(ref pcsLogic);
-            Console.WriteLine("Hello World from PCS (" + GetLocalIPAddress()  + ") !");
+            Console.WriteLine("========================================================================");
+            Console.WriteLine("[ STARTING ] : Process Creation Service (" + GetLocalIPAddress()  + ") !");
+            Console.WriteLine("========================================================================");
             Console.ReadLine();
             server.ShutDown();
         }

@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CHashing;
+using Grpc.Core;
 
 namespace PuppetMasterCLI
 {
@@ -46,7 +47,7 @@ namespace PuppetMasterCLI
 
         public void CreateScheduler(string serverId, string url)
         {
-            Console.WriteLine("Create Schedular: ", serverId, url);
+            Console.WriteLine("[ CreateScheduler ] : Creating Scheduler: ", serverId, url);
             // Init the Schedular in a new process
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
@@ -68,10 +69,9 @@ namespace PuppetMasterCLI
                     pcsManager.SetScheduler(url);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // Log error.
-                Console.WriteLine(e.Message);
+                Console.WriteLine("[ ERROR ] : Error creating scheduler...");
             }
         }
 
@@ -98,15 +98,23 @@ namespace PuppetMasterCLI
 
             foreach (StorageNodeStruct sns in storageNodes)
             {
-                AddStorageRequest newStorageRequest = new AddStorageRequest { };
-                StorageInfo storageInfo = new StorageInfo
+                try
                 {
-                    Id = node.serverId,
-                    ReplicaId = node.replicaId,
-                    Url = node.url
-                };
-                newStorageRequest.Storages.Add(storageInfo);
-                sns.storageClient.AddStorage(newStorageRequest);
+                    AddStorageRequest newStorageRequest = new AddStorageRequest { };
+                    StorageInfo storageInfo = new StorageInfo
+                    {
+                        Id = node.serverId,
+                        ReplicaId = node.replicaId,
+                        Url = node.url
+                    };
+                    newStorageRequest.Storages.Add(storageInfo);
+                    sns.storageClient.AddStorage(newStorageRequest);
+                }
+                catch (RpcException e)
+                {
+                    Console.WriteLine("[ ERROR ] - AddStorage Request Status code: " + e.StatusCode);
+                    Exit();
+                }
             }
 
             AddStorageRequest storagesRequest = new AddStorageRequest { };
@@ -119,19 +127,26 @@ namespace PuppetMasterCLI
                     Url = sns.url
                 };
                 storagesRequest.Storages.Add(storageInfo);
-
             }
 
-            node.storageClient.AddStorage(storagesRequest);
+            try { 
+                node.storageClient.AddStorage(storagesRequest);
+            }
+            catch (RpcException e)
+            {
+                Console.WriteLine("[ ERROR ] - AddStorage Request Status code: " + e.StatusCode);
+                Exit();
+            }
 
             storageNodes.Add(node);
 
             replicaIdCounter++;
         }
+
         public void CreateWorker(string serverId, string url, int delay)
         {
             var pcsHost = ExtractHostFromURL(url);
-            Console.WriteLine("Create Worker: U: " + url + " - H: " + pcsHost);
+            Console.WriteLine("[ CreateWorker ] : Creating Worker: URL: " + url + " - Host: " + pcsHost);
             pcsManagers[pcsHost].createWorkerNode(serverId, url, delay, debug, logServer.GetURL());
 
             WorkerNodeStruct node;
@@ -155,10 +170,17 @@ namespace PuppetMasterCLI
                 });
             }
 
-            SetupReply setupReply = setupClient.Setup(setupRequest);
-            if (!setupReply.Okay)
+            try
             {
-                Console.WriteLine("Error setting up the storages in worker node: " + serverId);
+                SetupReply setupReply = setupClient.Setup(setupRequest);
+                if (!setupReply.Okay)
+                {
+                    Console.WriteLine("[ ERROR ] : Error setting up the storages in worker node: " + serverId);
+                }
+            }
+            catch (RpcException e)
+            {
+                Console.WriteLine("[ ERROR ] : Setup Request Status code: " + e.StatusCode);
             }
         }
 
@@ -217,8 +239,8 @@ namespace PuppetMasterCLI
                 PopulateRequest request = new PopulateRequest();
 
                 List<string> setOfReplicas = consistentHasing.ComputeSetOfReplicas(key);
-                Console.WriteLine("Populating key: " + key);
-                Console.WriteLine("SetOfReplicas: ");
+                Console.WriteLine("[ Populate ] : Populating key: " + key);
+                Console.WriteLine("[ Populate ] : SetOfReplicas: ");
 
                 string firstReplica = setOfReplicas[0];
 
@@ -248,8 +270,15 @@ namespace PuppetMasterCLI
                     {
                         if (replicaServerId == sns.serverId)
                         {
-                            sns.storageClient.Populate(request);
-                            break;
+                            try
+                            {
+                                sns.storageClient.Populate(request);
+                                break;
+                            }
+                            catch (RpcException e)
+                            {
+                                Console.WriteLine("[ ERROR ] : Populate Request Status code: " + e.StatusCode);
+                            }
                         }
                     }
                 }
@@ -272,10 +301,9 @@ namespace PuppetMasterCLI
                 {
                     storageNode.statusClient.StatusAsync(new StatusRequest { });
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    // TODO: Storage node down
-                    Console.WriteLine("Exception: " + e);
+                    Console.WriteLine("[ ERROR ] : StatusAsync Request Status code: " + e.StatusCode);
                 }
             }
 
@@ -285,9 +313,9 @@ namespace PuppetMasterCLI
                 {
                     workerNode.statusClient.StatusAsync(new StatusRequest { });
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    Console.WriteLine("Exception: " + e);
+                    Console.WriteLine("[ ERROR ] : StatusAsync Request Status code: " + e.StatusCode);
                 }
             }
         }
@@ -307,10 +335,9 @@ namespace PuppetMasterCLI
                     {
                         reply = node.storageClient.Dump(req);
                     }
-                    catch (Exception e)
+                    catch (RpcException)
                     {
                         storageNodes.Remove(node);
-                        Console.WriteLine("Storage node (" + node.serverId + ") crashed!");
                         return;
                     }
 
@@ -332,7 +359,8 @@ namespace PuppetMasterCLI
                     // Print the results like:
                     // key    |   versions (versionNumber, ReplicaId, valueX)
                     // money  |   (1, 1, 1000) (2, 1, 2000)
-                    String res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
+                    string res = "Storage Server Id: " + node.serverId + "\r\n";
+                    res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
                     foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                     {
                         res += pair.Key + " : ";
@@ -342,7 +370,7 @@ namespace PuppetMasterCLI
                         }
                     }
 
-                    Console.WriteLine(res);
+                    Console.WriteLine("[ ListServer ] : " + res);
                     return;
                 }
             }
@@ -362,9 +390,8 @@ namespace PuppetMasterCLI
                 {
                     reply = node.storageClient.Dump(req);
                 }
-                catch (Exception e)
+                catch (RpcException)
                 {
-                    Console.WriteLine("Storage node (" + node.serverId + ") crashed!");
                     crashedNodes.Add(node);
                     continue;
                 }
@@ -397,7 +424,7 @@ namespace PuppetMasterCLI
                     }
                 }
 
-                Console.WriteLine(res);
+                Console.WriteLine("[ ListGlobal ] : " + res);
             }
 
             // Remove crashed nodes from List
@@ -488,7 +515,7 @@ namespace PuppetMasterCLI
 
         public bool ParseConfigScriptLine(string scritpLine)
         {
-            Console.WriteLine("Script Line: " + scritpLine);
+            Console.WriteLine("[ CONFIG ] : Script Line -> " + scritpLine);
             string[] configArgs = scritpLine.Split(' ');
             string command = configArgs[0];
             switch (command)

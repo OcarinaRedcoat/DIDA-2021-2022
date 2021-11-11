@@ -24,8 +24,6 @@ namespace PuppetMasterCLI
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             GrpcChannel channel = GrpcChannel.ForAddress(url);
             client = new PCSService.PCSServiceClient(channel);
-
-
             GrpcChannel channelScheduler = GrpcChannel.ForAddress("http://" + GetLocalIPAddress() + ":4000");
             schClient = new SchedulerService.SchedulerServiceClient(channelScheduler);
         }
@@ -37,9 +35,8 @@ namespace PuppetMasterCLI
             schClient = new SchedulerService.SchedulerServiceClient(channelScheduler);
         }
 
-        public void createWorkerNode(string serverId, string url, int delay, bool debug, string logURL) // return the Node
+        public void createWorkerNode(string serverId, string url, int delay, bool debug, string logURL)
         {
-            // GRPC call to PCS in order to create ...
             try
             {
                 var reply = client.CreateWorkerNode(
@@ -54,11 +51,11 @@ namespace PuppetMasterCLI
                 );
                 if (reply.Okay)
                 {
-                    Console.WriteLine("Okay");
+                    Console.WriteLine("[ LOG ] : Created worker node!");
                 }
                 else
                 {
-                    Console.WriteLine("Not Okay");
+                    Console.WriteLine("[ ERROR ] : Error creating Worker node!");
                 }
 
                 var request = new AddWorkerNodeRequest
@@ -71,15 +68,15 @@ namespace PuppetMasterCLI
                 var replyScheduler = schClient.AddWorkerNode(request);
                 if (replyScheduler.Okay)
                 {
-                    Console.WriteLine("Okay Scheduler");
+                    Console.WriteLine("[ LOG ] : Added worker to Scheduler");
                 }
                 else
                 {
-                    Console.WriteLine("Not Okay Scheduler");
+                    Console.WriteLine("[ ERROR ] : Error trying to add worker to Scheduler");
                 }
-            } catch (Exception e)
+            } catch (Exception)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("[ ERROR ] : Error creating Worker node!");
             }
         }
 
@@ -98,16 +95,16 @@ namespace PuppetMasterCLI
                 );
                 if (reply.Okay)
                 {
-                    Console.WriteLine("Okay");
+                    Console.WriteLine("[ LOG ] : Created storage node!");
                 }
                 else
                 {
-                    Console.WriteLine("Not Okay");
+                    Console.WriteLine("[ ERROR ] : Error creating Storage node!");
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("[ ERROR ] : Error creating Storage node!");
             }
         }
 
@@ -121,11 +118,11 @@ namespace PuppetMasterCLI
                 );
             if (reply.Okay)
             {
-                Console.WriteLine("Nuked Storage: " + serverId);
+                Console.WriteLine("[ LOG ] : Nuked Storage: " + serverId);
             }
             else
             {
-                Console.WriteLine("Not Nuked Storage: " + serverId);
+                Console.WriteLine("[ ERROR ] : Error Nuking Storage: " + serverId);
             }
         }
 

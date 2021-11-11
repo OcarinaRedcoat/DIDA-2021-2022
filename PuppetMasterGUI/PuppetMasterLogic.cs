@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using CHashing;
 using Grpc.Core;
+using System.Windows.Forms;
 
 public delegate void DelAddMsg(string s);
 
@@ -54,7 +55,6 @@ namespace PuppetMasterGUI
 
         public void CreateScheduler(string serverId, string url)
         {
-            Console.WriteLine("Create Scheduler: ", serverId, url);
             // Init the Schedular in a new process
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = false;
@@ -76,10 +76,9 @@ namespace PuppetMasterGUI
                     pcsManager.SetScheduler(url);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // Log error.
-                Console.WriteLine(e.Message);
+                MessageBox.Show("[ ERROR ] : Error creating scheduler...");
             }
         }
 
@@ -106,14 +105,23 @@ namespace PuppetMasterGUI
 
             foreach (StorageNodeStruct sns in storageNodes)
             {
-                AddStorageRequest newStorageRequest = new AddStorageRequest { };
-                StorageInfo storageInfo = new StorageInfo {
-                    Id = node.serverId,
-                    ReplicaId = node.replicaId,
-                    Url = node.url
-                };
-                newStorageRequest.Storages.Add(storageInfo);
-                sns.storageClient.AddStorage(newStorageRequest);
+                try
+                {
+                    AddStorageRequest newStorageRequest = new AddStorageRequest { };
+                    StorageInfo storageInfo = new StorageInfo
+                    {
+                        Id = node.serverId,
+                        ReplicaId = node.replicaId,
+                        Url = node.url
+                    };
+                    newStorageRequest.Storages.Add(storageInfo);
+                    sns.storageClient.AddStorage(newStorageRequest);
+                }
+                catch (RpcException e)
+                {
+                    MessageBox.Show("[ ERROR ] - AddStorage Request Status code: " + e.StatusCode);
+                    Exit();
+                }
             }
 
             AddStorageRequest storagesRequest = new AddStorageRequest { };
@@ -126,7 +134,6 @@ namespace PuppetMasterGUI
                     Url = sns.url
                 };
                 storagesRequest.Storages.Add(storageInfo);
-
             }
 
             node.storageClient.AddStorage(storagesRequest);
@@ -135,10 +142,10 @@ namespace PuppetMasterGUI
 
             replicaIdCounter++;
         }
+
         public void CreateWorker(string serverId, string url, int gossipDelay)
         {
             var pcsHost = ExtractHostFromURL(url);
-            Console.WriteLine("Create Worker: U: " + url + " - H: " + pcsHost);
             pcsManagers[pcsHost].createWorkerNode(serverId, url, gossipDelay, debug, logServer.GetURL());
 
             WorkerNodeStruct node;
@@ -160,11 +167,17 @@ namespace PuppetMasterGUI
                     Url = sns.url
                 });
             }
-
-            SetupReply setupReply = setupClient.Setup(setupRequest);
-            if (!setupReply.Okay)
+            try
             {
-                Console.WriteLine("Error setting up the storages in worker node: " + serverId);
+                SetupReply setupReply = setupClient.Setup(setupRequest);
+                if (!setupReply.Okay)
+                {
+                    MessageBox.Show("[ ERROR ] : Error setting up the storages in worker node: " + serverId);
+                }
+            }
+            catch (RpcException e)
+            {
+                MessageBox.Show("[ ERROR ] : Setup Request Status code: " + e.StatusCode);
             }
         }
 
@@ -251,8 +264,15 @@ namespace PuppetMasterGUI
                     {
                         if (replicaServerId == sns.serverId)
                         {
-                            sns.storageClient.Populate(request);
-                            break;
+                            try
+                            {
+                                sns.storageClient.Populate(request);
+                                break;
+                            }
+                            catch (RpcException e)
+                            {
+                                MessageBox.Show("[ ERROR ] : Populate Request Status code: " + e.StatusCode);
+                            }
                         }
                     }
                 }
@@ -275,10 +295,9 @@ namespace PuppetMasterGUI
                 {
                     storageNode.statusClient.StatusAsync(new StatusRequest { });
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    // TODO: Storage node down
-                    Console.WriteLine("Exception: " + e);
+                    MessageBox.Show("[ ERROR ] : StatusAsync Request Status code: " + e.StatusCode);
                 }
             }
 
@@ -288,9 +307,9 @@ namespace PuppetMasterGUI
                 {
                     workerNode.statusClient.StatusAsync(new StatusRequest { });
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    Console.WriteLine("Exception: " + e);
+                    MessageBox.Show("[ ERROR ] : StatusAsync Request Status code: " + e.StatusCode);
                 }
             }
         }
@@ -310,7 +329,7 @@ namespace PuppetMasterGUI
                     {
                         reply = node.storageClient.Dump(req);
                     }
-                    catch (RpcException e)
+                    catch (RpcException)
                     {
                         storageNodes.Remove(node);
                         return;
@@ -345,7 +364,6 @@ namespace PuppetMasterGUI
                         }
                     }
 
-                    Console.WriteLine(res);
                     form.AddLog(res);
                 }
             }
@@ -493,7 +511,6 @@ namespace PuppetMasterGUI
 
         public bool ParseConfigScriptLine(string scritpLine)
         {
-            Console.WriteLine("Script Line: " + scritpLine);
             string[] configArgs = scritpLine.Split(' ');
             string command = configArgs[0];
             switch (command)

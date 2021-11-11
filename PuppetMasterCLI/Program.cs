@@ -12,31 +12,33 @@ namespace PuppetMasterCLI
 
         static void Main()
         {
-            Console.WriteLine("Initializing the PuppetMasterCLI");
+            Console.WriteLine("========================================================================");
+            Console.WriteLine("[ STARTING ] : PuppetMasterCLI!");
+            Console.WriteLine("========================================================================");
 
             PuppetMasterLogic pm = new PuppetMasterLogic("pcs.txt");
             string line = "";
 
-            Console.WriteLine("Do you want to load a Config File [y/n]");
+            Console.WriteLine("[ SETUP ] : Do you want to load a Config File [y/n]");
             var loadFileBool = Console.ReadLine();
 
             // If args -> ImportFile
             if (loadFileBool == "y") {
-                Console.WriteLine("Write the name of the config file");
+                Console.WriteLine("[ SETUP ] : Write the name of the config file");
                 var configFile = Console.ReadLine();
-                Console.WriteLine("Config File: " + configFile);
+                Console.WriteLine("[ SETUP ] : Config File: " + configFile);
                 pm.ImportScriptFile(configFile);
             }
 
             while (run) {
-                Console.WriteLine("Write command line");
+                Console.WriteLine("[ PROMPT ] : Write command line");
+                Console.Write("[ PuppetMasterCLI ] : $ ");
                 line = Console.ReadLine();
                 run = pm.ParseConfigScriptLine(line);
             }
 
             // Shutdown logServer
             pm.Exit();
-
         }
 
     }

@@ -22,11 +22,12 @@ namespace PCS
 
             try
             {
+                Console.WriteLine("[ LOG ] - Creating Worker...");
                 processes.TryAdd(serverId, Process.Start(startInfo));
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("[ ERROR ] : CreateWorkerNode Process failed.");
             }
             return new CreateWorkerNodeReply
             {
@@ -43,16 +44,14 @@ namespace PCS
             startInfo.WindowStyle = ProcessWindowStyle.Normal;
             startInfo.Arguments = serverId + " " + url + " " + gossipDelay + " " + replicaId;
 
-            Console.WriteLine("Recebeu Create Storage");
-
             try
             {
-                Console.WriteLine("Creating Storage...");
+                Console.WriteLine("[ LOG ] - Creating Storage...");
                 processes.TryAdd(serverId, Process.Start(startInfo));
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("[ ERROR ] : CreateStorageNode Process failed.");
             }
             return new CreateStorageNodeReply
             {
@@ -78,7 +77,6 @@ namespace PCS
             }
             return new NukeAllReply { };
         }
-
 
         public void WaitForProcesses() { lock (processes) { foreach (KeyValuePair<string, Process> k in processes) { k.Value.WaitForExit(); } } }
     }
