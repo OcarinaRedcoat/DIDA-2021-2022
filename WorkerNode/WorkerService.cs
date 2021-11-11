@@ -64,7 +64,7 @@ namespace WorkerNode
 
             foreach (DIDAWorker.DIDAAssignment ch in req.chain)
             {
-                Console.WriteLine("Chain Host: " + ch.host + " Port: " + ch.port + " Operator: " + ch.op.classname + " Output: " + ch.output);
+                Console.WriteLine("[ DIDAAssignment CHAIN ] : Chain Host: " + ch.host + " Port: " + ch.port + " Operator: " + ch.op.classname + " Output: " + ch.output);
             }
 
             if (req.next < req.chainSize)
@@ -85,12 +85,6 @@ namespace WorkerNode
 
         public ProcessOperatorRequest GenerateRequest(DIDAWorker.DIDARequest req, DIDAMetaRecord grpcMeta)
         {
-            Console.WriteLine("GENERATE REQUEST: " + grpcMeta.Id);
-            foreach (KeyVersionAccess access in grpcMeta.PreviousAccessed)
-            {
-                Console.WriteLine("K: " + access.Key + " - V: " + access.Version.VersionNumber + " : " + access.Version.ReplicaId);
-            }
-
             ProcessOperatorRequest newReq = new ProcessOperatorRequest
             {
                 Meta = grpcMeta,
@@ -180,8 +174,8 @@ namespace WorkerNode
                 Ports = { new ServerPort(host, port, ServerCredentials.Insecure) }
             };
 
-            Console.WriteLine("Starting Worker Node Server");
-            Console.WriteLine("ServerId: " + this.serverId + " Host: " + this.host + " Port: " + this.port);
+            Console.WriteLine("[ LOG ] : Starting Worker Node Server");
+            Console.WriteLine("[ LOG ] : ServerId: " + this.serverId + " Host: " + this.host + " Port: " + this.port);
             server.Start();
         }
 

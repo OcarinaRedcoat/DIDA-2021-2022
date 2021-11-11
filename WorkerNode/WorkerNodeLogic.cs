@@ -37,8 +37,10 @@ namespace WorkerNode
 
         public StatusReply Status()
         {
-            Console.WriteLine("This is my Status: " + workerId);
-            // TODO: More info
+            Console.WriteLine("[ STATUS ] : This is my Status: " + workerId);
+            Console.WriteLine("[ STATUS ] : ResponseDelay: " + responseDelay);
+            Console.WriteLine("[ STATUS ] : Number of Storages: " + storagesNodes.Count);
+            Console.WriteLine("[ STATUS ] : Debug: " + (debugMode ? "True" : "False"));
             return new StatusReply { };
         }
 
@@ -69,8 +71,6 @@ namespace WorkerNode
 
                 output = _op.ProcessRecord(req.meta, req.input, previouOutput);
 
-                // TODO: If is the last operator from the chain ping scheduler
-
                 if (debugMode)
                 {
                     logClient.Log(new LogRequest
@@ -79,13 +79,11 @@ namespace WorkerNode
                         Message = output
                     });
                 }
-                Console.WriteLine("Output from Operator: " + output);
-
+                Console.WriteLine("[ LOG ] : Output from Operator: " + output);
             }
             catch (Exception e)
             {
                 Thread.CurrentThread.Abort();
-                // TODO: handle this case, warn PuppetMaster
             }
 
             newMeta = proxy.GetMetaRecord();
@@ -123,7 +121,7 @@ namespace WorkerNode
             }
             catch (Exception e)
             {
-                Console.WriteLine("Message: ", e);
+                Console.WriteLine("[ ERROR ] : Message: ", e);
                 throw e;
             }
             throw new Exception("Type not found!");
@@ -138,7 +136,7 @@ namespace WorkerNode
                     serverId = s.Id,
                     url = s.Url
                 });
-                Console.WriteLine("Receive new Storage " + s.Id);
+                Console.WriteLine("[ LOG ] : Receive new Storage " + s.Id);
             }
             return new SetupReply
             {

@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CHashing;
+using Grpc.Core;
 
 public delegate void DelAddMsg(string s);
 
@@ -37,7 +38,6 @@ namespace PuppetMasterGUI
         private int replicaIdCounter;
 
         private Form1 form;
-
 
         public PuppetMasterLogic(string pcsConfigFileName, Form1 form)
         {
@@ -294,7 +294,7 @@ namespace PuppetMasterGUI
                 }
             }
         }
-        public void ListServer(string serverId) // TODO: Snapshot???
+        public void ListServer(string serverId)
         {
             // Lists all objects stored on the server identified by server id
 
@@ -310,10 +310,9 @@ namespace PuppetMasterGUI
                     {
                         reply = node.storageClient.Dump(req);
                     }
-                    catch (Exception e)
+                    catch (RpcException e)
                     {
                         storageNodes.Remove(node);
-                        Console.WriteLine("Storage node (" + node.serverId + ") crashed!");
                         return;
                     }
 
@@ -335,7 +334,8 @@ namespace PuppetMasterGUI
                     // Print the results like:
                     // key    |   versions (versionNumber, ReplicaId, valueX)
                     // money  |   (1, 1, 1000) (2, 1, 2000)
-                    string res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
+                    string res = "Storage Server Id: " + node.serverId + "\r\n";
+                    res += "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
                     foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                     {
                         res += pair.Key + " : ";
@@ -366,9 +366,8 @@ namespace PuppetMasterGUI
                 {
                     reply = node.storageClient.Dump(req);
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    Console.WriteLine("Storage node (" + node.serverId + ") crashed!");
                     crashedNodes.Add(node);
                     continue;
                 }

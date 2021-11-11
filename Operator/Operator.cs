@@ -31,9 +31,9 @@ namespace DIDAOperator
         string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
         {
             var val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "success", Oldvalue = previousOperatorOutput });
-            val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "yeaaaaaaaaaaaaaaaaaaaboyyyyyyyyyyyyyyyyyyyyyyyyyyy", Oldvalue = "success" });
+            val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "56", Oldvalue = "success" });
 
-            Console.WriteLine("updated record:" + input);
+            Console.WriteLine("[ UpdateAndChainOperator ] : updated record:" + input);
             return "end";
         }
 
@@ -50,8 +50,8 @@ namespace DIDAOperator
         // this operator increments the storage record identified in the metadata record every time it is called.
         string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
         {
-            Console.WriteLine("input string was: " + input);
-            Console.Write("reading data record: " + input + " with value: ");
+            Console.WriteLine("[ AddOperator ] : Input string was: " + input);
+            Console.Write("[ AddOperator ] : Reading data record: " + input + " with value: ");
             var val = _storageProxy.read(new DIDAReadRequest { Id = input, Version = new DIDAVersion { VersionNumber = -1, ReplicaId = -1 } });
             string storedString = val.Val;
             Console.WriteLine(storedString);
@@ -65,21 +65,21 @@ namespace DIDAOperator
             }
             catch (Exception e)
             {
-                output = "int_conversion_failed";
-                Console.WriteLine(" operator expecting int but got chars: " + e.Message);
+                output = "[ AddOperator - Error ] : int_conversion_failed";
+                Console.WriteLine("[ AddOperator - Error ] : Operator expecting int but got chars: " + e.Message);
             }
 
 
             int oneAhead = Int32.Parse(input);
             oneAhead++;
-            Console.Write("reading data record: " + oneAhead + " with value: ");
+            Console.Write("[ AddOperator ] : Reading data record: " + oneAhead + " with value: ");
             _storageProxy.read(new DIDAReadRequest { Id = oneAhead.ToString(), Version = new DIDAVersion { VersionNumber = -1, ReplicaId = -1 } });
             storedString = val.Val;
             Console.WriteLine(storedString);
 
 
             _storageProxy.write(new DIDAWriteRequest { Id = input, Val = output });
-            Console.WriteLine("writing data record:" + input + " with new value: " + output);
+            Console.WriteLine("[ AddOperator ] : Writing data record:" + input + " with new value: " + output);
             return output;
         }
 
@@ -88,7 +88,6 @@ namespace DIDAOperator
             _storageProxy = storageProxy;
         }
     }
-
 }
 
 public class IncrementOperator : IDIDAOperator
@@ -103,8 +102,8 @@ public class IncrementOperator : IDIDAOperator
     // this operator increments the storage record identified in the metadata record every time it is called.
     string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
     {
-        Console.WriteLine("input string was: " + input);
-        Console.Write("reading data record: " + meta.Id + " with value: ");
+        Console.WriteLine("[ IncrementOperator ] : Input string was: " + input);
+        Console.Write("[ IncrementOperator ] : Reading data record: " + meta.Id + " with value: ");
         var val = _storageProxy.read(new DIDAReadRequest { Id = meta.Id.ToString(), Version = new DIDAVersion { VersionNumber = -1, ReplicaId = -1 } });
         string storedString = val.Val;
         Console.WriteLine(storedString);
@@ -114,7 +113,7 @@ public class IncrementOperator : IDIDAOperator
         //requestCounter += Int32.Parse(previousOperatorOutput);
 
         _storageProxy.write(new DIDAWriteRequest { Id = meta.Id.ToString(), Val = requestCounter.ToString() });
-        Console.WriteLine("writing data record:" + meta.Id + " with new value: " + requestCounter.ToString());
+        Console.WriteLine("[ IncrementOperator ] : Writing data record:" + meta.Id + " with new value: " + requestCounter.ToString());
         return requestCounter.ToString();
     }
 

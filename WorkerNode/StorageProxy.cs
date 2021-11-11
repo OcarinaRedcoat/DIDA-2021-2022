@@ -5,6 +5,7 @@ using DIDAStorageClient;
 using DIDAWorker;
 using CHashing;
 using System.Threading;
+using Grpc.Core;
 
 namespace WorkerNode
 {
@@ -70,7 +71,7 @@ namespace WorkerNode
             {
                 try
                 {
-                    Console.WriteLine("Calling Read on... " + sId);
+                    Console.WriteLine("[ LOG ] : Calling Read on... " + sId);
                     res = _clients[sId].read(
                         new DIDAStorageClient.DIDAReadRequest {
                             Id = r.Id,
@@ -84,7 +85,7 @@ namespace WorkerNode
                     // If the replica does not have the version required, try another one!
                     if (res.Version.ReplicaId == -1 && res.Version.VersionNumber == -1)
                     {
-                        Console.WriteLine("Replica does not have the version required...");
+                        Console.WriteLine("[ ERROR ] : Replica does not have the version required...");
                         continue;
                     }
                     // ADD ACCESS TO METARECORD
@@ -109,7 +110,7 @@ namespace WorkerNode
                             }
                         });
                     }
-                    Console.WriteLine("Read Succeed: " + sId);
+                    Console.WriteLine("[ LOG ] : Read Succeed: " + sId);
                     return new DIDAWorker.DIDARecordReply
                     {
                         Id = res.Id,
@@ -121,21 +122,24 @@ namespace WorkerNode
                         }
                     };
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    // Replica down
-                    // TODO: Remove the replica!!!
-                    Console.WriteLine("Read Failed to Replica: " + sId);
-                    Console.WriteLine(e.Message);
+                    if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                    {
+                        Console.WriteLine("[ ERROR ] : Read Failed to Replica: " + sId);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
+                    }
                 }
             }
-            // res = _clients["s1"].read(new DIDAStorageClient.DIDAReadRequest { Id = r.Id, Version = new DIDAStorageClient.DIDAVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
-            Console.WriteLine("READ NOT FOUND ABORTING");
+
+            Console.WriteLine("[ ABORT ] : Version required not found, aborting application...");
             Thread.CurrentThread.Abort();
             return new DIDAWorker.DIDARecordReply { Id = "1", Val = "1", Version = { VersionNumber = -1, ReplicaId = -1 } };
         }
 
-        // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
             List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
@@ -144,7 +148,7 @@ namespace WorkerNode
             {
                 try
                 {
-                    Console.WriteLine("Calling Write on... " + sId);
+                    Console.WriteLine("[ LOG ] : Calling Write on... " + sId);
                     res = _clients[sId].write(
                         new DIDAStorageClient.DIDAWriteRequest
                         {
@@ -152,7 +156,12 @@ namespace WorkerNode
                             Val = r.Val
                         }
                     );
-                    // ADD ACCESS TO METARECORD
+                    // if null object retry next replica
+                    if (res.ReplicaId == -1 && res.VersionNumber == -1)
+                    {
+                        Console.WriteLine("[ ERROR ] : Not possible to write in replica " + sId);
+                        continue;
+                    }
                     bool existsInMeta = false;
                     foreach (KeyVersionAccess access in _meta.PreviousAccessed)
                     {
@@ -173,30 +182,31 @@ namespace WorkerNode
                             }
                         });
                     }
-                    Console.WriteLine("Write Succeed: " + sId);
+                    Console.WriteLine("[ LOG ] : Write Succeed: " + sId);
                     return new DIDAWorker.DIDAVersion
                     {
                         VersionNumber = res.VersionNumber,
                         ReplicaId = res.ReplicaId
                     };
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    // Replica down
-                    // TODO: Remove the replica!!!
-                    Console.WriteLine("Write Failed to Replica: " + sId);
-                    Console.WriteLine(e.Message);
+                    if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                    {
+                        Console.WriteLine("[ ERROR ] : Write Failed to Replica: " + sId);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
+                    }
                 }
             }
-            // var res = _clients["s1"].write(new DIDAStorageClient.DIDAWriteRequest { Id = r.Id, Val = r.Val });
-            // return new DIDAWorker.DIDAVersion { VersionNumber = res.VersionNumber, ReplicaId = res.ReplicaId };
 
-            Console.WriteLine("WRITE NOT POSSIBLE ABORTING");
+            Console.WriteLine("[ ABORT ] : Write could not be done, aborting application...");
             Thread.CurrentThread.Abort();
             return new DIDAWorker.DIDAVersion { VersionNumber = -1, ReplicaId = -1 };
         }
 
-        // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion updateIfValueIs(DIDAWorker.DIDAUpdateIfRequest r)
         {
             List<string> storagesIds = _consistentHashing.ComputeShuffledSetOfReplicas(r.Id);
@@ -205,10 +215,7 @@ namespace WorkerNode
             {
                 try
                 {
-                    Console.WriteLine("Calling UpdateIfValueIs on... " + sId);
-                    Console.WriteLine("Id: :" + r.Id);
-                    Console.WriteLine("newvalue: " + r.Newvalue);
-                    Console.WriteLine("oldvalue: " + r.Oldvalue);
+                    Console.WriteLine("[ LOG ] : Calling UpdateIfValueIs on... " + sId);
                     DIDAStorageClient.DIDAVersion res = _clients[sId].updateIfValueIs(
                         new DIDAStorageClient.DIDAUpdateIfRequest
                         {
@@ -218,32 +225,34 @@ namespace WorkerNode
                         }
                     );
 
-                    // TODO: TIMEOUT in GRPC setting????
                     // if null object retry next replica
                     if (res.ReplicaId == -1 && res.VersionNumber == -1)
                     {
-                        Console.WriteLine("Replica " + sId +  " aborted");
+                        Console.WriteLine("[ ERROR ] : Not possible to update in replica " + sId);
                         continue;
                     }
 
-                    Console.WriteLine("UpdateIfValueIs Succeed: " + sId);
+                    Console.WriteLine("[ LOG ] : UpdateIfValueIs Succeed: " + sId);
                     return new DIDAWorker.DIDAVersion
                     {
                         VersionNumber = res.VersionNumber,
                         ReplicaId = res.ReplicaId
                     };
                 }
-                catch (Exception e)
+                catch (RpcException e)
                 {
-                    // TIMEOUT EXCEPTION VS REPLICA DOWN
-
-                    // Replica down
-                    // TODO: Remove the replica!!!
-                    Console.WriteLine("UpdateIfValueIs Failed to Replica: " + sId);
-                    Console.WriteLine(e.Message);
+                    if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                    {
+                        Console.WriteLine("[ ERROR ] : UpdateIfValueIs Failed to Replica: " + sId);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
+                    }
                 }
             }
-            Console.WriteLine("UPDATE IF VALUE IS NOT POSSIBLE ABORTING");
+
+            Console.WriteLine("[ ABORT ] : UpdateIfValueIs could not be done, aborting application...");
             Thread.CurrentThread.Abort();
             return new DIDAWorker.DIDAVersion { VersionNumber = -1, ReplicaId = -1 };
         }

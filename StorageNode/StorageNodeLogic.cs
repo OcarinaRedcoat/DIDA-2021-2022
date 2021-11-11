@@ -147,6 +147,7 @@ namespace StorageNode
             {
                 // Dont request to ourselves
                 if (sId == this.serverId) continue;
+                if (this.storageNodes[sId].isDown) continue;
 
                 try
                 {
@@ -154,14 +155,20 @@ namespace StorageNode
                 }
                 catch (RpcException e)
                 {
-                    Console.WriteLine("Status Code: " + e.StatusCode);
-                    // if (e.StatusCode == StatusCode.)
+                    if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                    {
+                        this.storageNodes[sId].SetDown();
+                    }
+                    else
+                    {
+                        Console.WriteLine("GRPC Exception with Status Code: " + e.StatusCode);
+                    }
                 }
 
             }
 
             // Await for all lock requests
-            bool replicaDown = false;
+            bool replicaTimeout = false;
             foreach (AsyncUnaryCall<LockAndPullReply> call in lockingTasks)
             {
                 try
@@ -170,7 +177,7 @@ namespace StorageNode
                 }
                 catch (RpcException e)
                 {
-                    replicaDown = true;
+                    replicaTimeout = true;
                 }
             }
 
@@ -191,7 +198,7 @@ namespace StorageNode
             {
                 bool abort = false;
 
-                if (!replicaDown)
+                if (!replicaTimeout)
                 {
                     // This replica starts being the max version
                     if (this.storage[id].Count > 0)
@@ -298,6 +305,7 @@ namespace StorageNode
             {
                 // Dont request to ourselves
                 if (sId == this.serverId) continue;
+                if (this.storageNodes[sId].isDown) continue;
 
                 try
                 {
@@ -305,7 +313,14 @@ namespace StorageNode
                 }
                 catch (RpcException e)
                 {
-                    Console.WriteLine("Status Code: " + e.StatusCode);
+                    if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                    {
+                        this.storageNodes[sId].SetDown();
+                    }
+                    else
+                    {
+                        Console.WriteLine("GRPC Exception with Status Code: " + e.StatusCode);
+                    }
                 }
             }
 
@@ -371,7 +386,6 @@ namespace StorageNode
         {
             lock (this)
             {
-
                 if (!this.storage.ContainsKey(request.Record.Id))
                 {
                     this.AddNewKey(request.Record.Id);
@@ -442,7 +456,6 @@ namespace StorageNode
 
             lock (this)
             {
-
                 if (consensusLock[id].locked)
                 {
                     return new DIDAStorage.DIDAVersion
@@ -567,6 +580,7 @@ namespace StorageNode
                 node.serverId = si.ServerId;
                 node.replicaId = si.ReplicaId;
                 node.url = si.Url;
+                node.isDown = false;
                 node.channel = GrpcChannel.ForAddress(node.url);
                 node.gossipClient = new GossipService.GossipServiceClient(node.channel);
                 node.uiviClient = new UpdateIfValueIsService.UpdateIfValueIsServiceClient(node.channel);
@@ -662,6 +676,8 @@ namespace StorageNode
                 {
                     try
                     {
+                        if (this.storageNodes[requestServerId].isDown) continue;
+
                         GossipRequest request = gossipRequests[requestServerId];
                         if (request.UpdateLogs.Count > 0)
                         {
@@ -670,9 +686,16 @@ namespace StorageNode
                             this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
                         }
                     }
-                    catch (Exception e)
+                    catch (RpcException e)
                     {
-                        Console.WriteLine("Gossip Requests exception: " + e.Message);
+                        if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                        {
+                            this.storageNodes[requestServerId].SetDown();
+                        }
+                        else
+                        {
+                            Console.WriteLine("GRPC Exception with Status Code: " + e.StatusCode);
+                        }
                     }
                 }
             }
@@ -794,9 +817,15 @@ namespace StorageNode
         public string serverId;
         public string url;
         public int replicaId;
+        public bool isDown;
         public GrpcChannel channel;
         public GossipService.GossipServiceClient gossipClient;
         public UpdateIfValueIsService.UpdateIfValueIsServiceClient uiviClient;
+
+        public void SetDown()
+        {
+            this.isDown = true;
+        }
     }
 
     public struct ConsensusKeyLock

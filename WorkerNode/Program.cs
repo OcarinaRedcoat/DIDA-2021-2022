@@ -8,7 +8,6 @@ namespace WorkerNode
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World from WorkerNode!");
             string serverId = args[0];
             string host = ExtractHostFromArg(args[1]);
             int port = ExtractPortFromArg(args[1]);
@@ -16,7 +15,6 @@ namespace WorkerNode
             bool debug = Int32.Parse(args[3]).Equals(1);
             string logURL = args[4];
 
-            if (debug) Console.WriteLine("Debug mode activated...");
             WorkerNodeLogic workerNodeLogic = new WorkerNodeLogic(serverId, delay, debug, logURL);
             WorkerServer workerServer = new WorkerServer(serverId, host, port, ref workerNodeLogic);
 
