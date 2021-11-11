@@ -37,8 +37,8 @@ namespace Scheduler
             {
                 string workerUrl = "http://" + request.Chain[0].Host + ":" + request.Chain[0].Port;
                 WorkerNodeStruct worker = workerNodes[workerUrl];
-                ProcessOperatorReply reply = worker.client.ProcessOperator(request);
-            } 
+                worker.client.ProcessOperatorAsync(request);
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);

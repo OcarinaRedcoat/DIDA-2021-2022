@@ -1,2 +1,5 @@
-operator AddOperator 0
+operator UpdateAndChainOperator 0
 operator UpdateAndChainOperator 1
+operator UpdateAndChainOperator 2
+operator UpdateAndChainOperator 3
+operator UpdateAndChainOperator 4

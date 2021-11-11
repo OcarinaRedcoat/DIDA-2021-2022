@@ -7,3 +7,7 @@ worker w1 http://localhost:4001 0
 worker w2 http://localhost:4002 0
 populate app2_data
 client 13 app2
+client 13 app2
+client 13 app2
+client 13 app2
+client 13 app2

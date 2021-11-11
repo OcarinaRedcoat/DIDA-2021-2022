@@ -30,8 +30,8 @@ namespace DIDAOperator
         // this operator increments the storage record identified in the metadata record every time it is called.
         string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
         {
-            var val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "success", Oldvalue = previousOperatorOutput });
-            val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "56", Oldvalue = "success" });
+            var val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "1", Oldvalue = "1" });
+            val = _storageProxy.updateIfValueIs(new DIDAUpdateIfRequest { Id = input, Newvalue = "1", Oldvalue = "1" });
 
             Console.WriteLine("[ UpdateAndChainOperator ] : updated record:" + input);
             return "end";

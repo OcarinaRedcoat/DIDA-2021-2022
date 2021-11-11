@@ -148,14 +148,26 @@ namespace WorkerNode
             {
                 try
                 {
-                    Console.WriteLine("[ LOG ] : Calling Write on... " + sId);
-                    res = _clients[sId].write(
-                        new DIDAStorageClient.DIDAWriteRequest
+                    do {
+                        Console.WriteLine("[ LOG ] : Calling Write on... " + sId);
+                        res = _clients[sId].write(
+                            new DIDAStorageClient.DIDAWriteRequest
+                            {
+                                Id = r.Id,
+                                Val = r.Val
+                            }
+                        );
+                        // Pending, because the key is locked
+                        if (res.ReplicaId == -2 && res.VersionNumber == -2)
                         {
-                            Id = r.Id,
-                            Val = r.Val
+                            Random rand = new Random();
+                            int tiebreakSleep = rand.Next(0, 5000);
+                            Console.WriteLine("[ TIEBREAK ] : Sleeping for " + tiebreakSleep + "ms");
+                            Thread.Sleep(tiebreakSleep);
                         }
-                    );
+
+                    } while (res.ReplicaId == -2 && res.VersionNumber == -2) ;
+
                     // if null object retry next replica
                     if (res.ReplicaId == -1 && res.VersionNumber == -1)
                     {
@@ -215,15 +227,29 @@ namespace WorkerNode
             {
                 try
                 {
-                    Console.WriteLine("[ LOG ] : Calling UpdateIfValueIs on... " + sId);
-                    DIDAStorageClient.DIDAVersion res = _clients[sId].updateIfValueIs(
-                        new DIDAStorageClient.DIDAUpdateIfRequest
+                    DIDAStorageClient.DIDAVersion res;
+                    do
+                    {
+                        Console.WriteLine("[ LOG ] : Calling UpdateIfValueIs on... " + sId);
+                        res = _clients[sId].updateIfValueIs(
+                            new DIDAStorageClient.DIDAUpdateIfRequest
+                            {
+                                Id = r.Id,
+                                Newvalue = r.Newvalue,
+                                Oldvalue = r.Oldvalue
+                            }
+                        );
+
+                        // Pending, because the key is locked
+                        if (res.ReplicaId == -2 && res.VersionNumber == -2)
                         {
-                            Id = r.Id,
-                            Newvalue = r.Newvalue,
-                            Oldvalue = r.Oldvalue
+                            Random rand = new Random();
+                            int tiebreakSleep = rand.Next(0, 5000);
+                            Console.WriteLine("[ TIEBREAK ] : Sleeping for " + tiebreakSleep  + "ms");
+                            Thread.Sleep(tiebreakSleep);
                         }
-                    );
+
+                    } while (res.ReplicaId == -2 && res.VersionNumber == -2);
 
                     // if null object retry next replica
                     if (res.ReplicaId == -1 && res.VersionNumber == -1)
