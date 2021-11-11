@@ -265,7 +265,7 @@ namespace PuppetMasterCLI
 
                 foreach (string replicaServerId in setOfReplicas)
                 {
-                    Console.WriteLine("REP: " + replicaServerId);
+                    Console.WriteLine("[ Populate ] : REP -> " + replicaServerId);
                     foreach (StorageNodeStruct sns in storageNodes)
                     {
                         if (replicaServerId == sns.serverId)
@@ -506,7 +506,7 @@ namespace PuppetMasterCLI
 
             foreach (string line in lines)
             {
-                Console.WriteLine("Line: " + line);
+                Console.WriteLine("[ SCRIPT ] : " + line);
                 // Use a tab to indent each line of the file.
                 ParseConfigScriptLine(line);
             }

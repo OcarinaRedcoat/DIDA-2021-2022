@@ -20,11 +20,13 @@ namespace PuppetMasterCLI
             string line = "";
 
             Console.WriteLine("[ SETUP ] : Do you want to load a Config File [y/n]");
+            Console.Write("[ PuppetMasterCLI ] : $ ");
             var loadFileBool = Console.ReadLine();
 
             // If args -> ImportFile
             if (loadFileBool == "y") {
                 Console.WriteLine("[ SETUP ] : Write the name of the config file");
+                Console.Write("[ PuppetMasterCLI ] : $ ");
                 var configFile = Console.ReadLine();
                 Console.WriteLine("[ SETUP ] : Config File: " + configFile);
                 pm.ImportScriptFile(configFile);

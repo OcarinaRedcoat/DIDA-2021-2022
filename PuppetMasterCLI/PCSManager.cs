@@ -63,7 +63,7 @@ namespace PuppetMasterCLI
                     ServerId = serverId,
                     Url = url,
                 };
-                Console.WriteLine(request.ServerId + " " + request.Url);
+                Console.WriteLine("[ LOG ] : Created new worker -> Id: " + request.ServerId + " Url: " + request.Url);
 
                 var replyScheduler = schClient.AddWorkerNode(request);
                 if (replyScheduler.Okay)

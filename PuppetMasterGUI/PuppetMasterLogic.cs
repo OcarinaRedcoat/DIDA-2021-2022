@@ -502,7 +502,6 @@ namespace PuppetMasterGUI
 
             foreach (string line in lines)
             {
-                Console.WriteLine("Line: " + line);
                 // Use a tab to indent each line of the file.
                 ParseConfigScriptLine(line);
             }
