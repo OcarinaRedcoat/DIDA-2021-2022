@@ -71,7 +71,6 @@ namespace Scheduler
 
         public AddWorkerNodeReply AddWorker(string workerId, string workerURL)
         {
-            Console.WriteLine(workerId + " " + workerURL);
             WorkerNodeStruct worker;
             worker.serverId = workerId;
             worker.host = ExtractHostFromUrl(workerURL);

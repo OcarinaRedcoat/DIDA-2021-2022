@@ -36,11 +36,16 @@ namespace StorageNode
             this.replicaId = replicaId;
             this.gossipDelay = gossipDelay;
             this.replicaManager = new ReplicaManager(this.replicaId, MAX_VERSIONS_STORED);
+
             this.timer = new Timer();
             timer.Interval = this.gossipDelay;
-            timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            timer.Elapsed += ((sender, args) => {
+                Console.WriteLine("[ LOG ] : Calling Gossip...");
+                this.Gossip();
+            });
             timer.AutoReset = true;
             timer.Enabled = false;
+            
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         }
 
@@ -417,6 +422,12 @@ namespace StorageNode
                                 }
                             }
                         };
+
+                        if (!this.startedGossip)
+                        {
+                            this.startedGossip = true;
+                            timer.Start();
+                        }
                     }
                     else
                     {
@@ -595,12 +606,6 @@ namespace StorageNode
             }
 
             return new CommitPhaseReply { Okay = true };
-        }
-
-        private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
-        {
-            Console.WriteLine("[ LOG ] : Calling Gossip...");
-            this.Gossip();
         }
 
         public void Gossip()
