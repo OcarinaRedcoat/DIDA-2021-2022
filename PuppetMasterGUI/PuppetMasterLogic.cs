@@ -372,7 +372,7 @@ namespace PuppetMasterGUI
         {
             // Lists all objects stored on the system
             List<StorageNodeStruct> crashedNodes = new List<StorageNodeStruct>();
-            string res = "";
+            string res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
 
             // For each StorageNode Client
             foreach (StorageNodeStruct node in storageNodes)
@@ -408,7 +408,7 @@ namespace PuppetMasterGUI
                 // Print the results like:
                 // key    |   versions (versionNumber, ReplicaId, valueX)
                 // money  |   (1, 1, 1000) (2, 1, 2000)
-                res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
+                res += "StorageId: " + node.serverId + "\r\n";
                 foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                 {
                     res += pair.Key + " : ";

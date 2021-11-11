@@ -90,6 +90,7 @@ namespace DIDAOperator
     }
 }
 
+/*
 public class IncrementOperator : IDIDAOperator
 {
     IDIDAStorage _storageProxy;
@@ -122,3 +123,4 @@ public class IncrementOperator : IDIDAOperator
         _storageProxy = storageProxy;
     }
 }
+*/

@@ -415,6 +415,7 @@ namespace PuppetMasterCLI
                 // key    |   versions (versionNumber, ReplicaId, valueX)
                 // money  |   (1, 1, 1000) (2, 1, 2000)
                 String res = "key      :   versions (versionNumber, ReplicaId, valueX)\r\n";
+                res += "[ ListGlobal ] : StorageId: " + node.serverId + "\r\n";
                 foreach (KeyValuePair<string, List<DIDARecord>> pair in data)
                 {
                     res += pair.Key + " : ";

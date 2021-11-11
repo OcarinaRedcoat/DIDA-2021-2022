@@ -1,0 +1,3 @@
+operator IncrementOperator 0
+operator WaitOperator 1
+operator IncrementOperator 2

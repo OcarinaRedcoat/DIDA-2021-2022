@@ -25,6 +25,8 @@ namespace PuppetMasterGUI
             {
                 logs = logs + value;
                 outputs.Text = logs;
+                outputs.SelectionStart = outputs.Text.Length;
+                outputs.ScrollToCaret();
             }
         }
 
