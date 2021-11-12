@@ -14,7 +14,7 @@ namespace StorageNode
 {
     class StorageNodeLogic 
     {
-        public static int MAX_VERSIONS_STORED = 2;
+        public static int MAX_VERSIONS_STORED = 5;
         public static int CONSENSUS_TIMEOUT = 5000;
 
         private Dictionary<string, StorageNodeStruct> storageNodes = new Dictionary<string, StorageNodeStruct>();
@@ -53,11 +53,14 @@ namespace StorageNode
         {
             foreach (StorageInfo si in storageInfos)
             {
-                StorageNodeStruct node;
-                node.serverId = si.ServerId;
-                node.replicaId = si.ReplicaId;
-                node.url = si.Url;
-                node.isDown = false;
+                StorageNodeStruct node = new StorageNodeStruct
+                { 
+                    serverId = si.ServerId,
+                    replicaId = si.ReplicaId,
+                    url = si.Url,
+                    isDown = false
+                };
+
                 node.channel = GrpcChannel.ForAddress(node.url);
                 node.gossipClient = new GossipService.GossipServiceClient(node.channel);
                 node.uiviClient = new UpdateIfValueIsService.UpdateIfValueIsServiceClient(node.channel);
@@ -123,7 +126,7 @@ namespace StorageNode
 
         public StatusReply Status()
         {
-            lock (storage)
+            lock (this)
             {
                 Console.WriteLine("[ STATUS ] : This is my Status: " + replicaId);
 
@@ -722,9 +725,11 @@ namespace StorageNode
 
                     GossipRequest request = gossipRequests[requestServerId];
 
+                    Console.WriteLine("Updates Count : " + request.UpdateLogs + " To: " + requestServerId);
+
                     if (request.UpdateLogs.Count > 0)
                     {
-                        Console.WriteLine("[ REQUEST ] Request from ServerId: " + requestServerId);
+                        Console.WriteLine("[ REQUEST ] Request for ServerId: " + requestServerId);
                         GossipReply reply = gossipClient.Gossip(request);
                         lock (this)
                         {
@@ -769,7 +774,7 @@ namespace StorageNode
                     if (!this.storage.ContainsKey(update.Id))
                     {
                         this.AddNewKey(update.Id);
-                        this.replicaManager.CreateNewEmptyTimeStamp(otherReplicaId, update.Id);
+                        this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, update.Id);
                     }
 
                     bool inserted = false;
@@ -860,12 +865,12 @@ namespace StorageNode
             this.consensusLock[key].timer.Elapsed += handler;
         }
     }
-    public struct StorageNodeStruct
+    public class StorageNodeStruct
     {
         public string serverId;
         public string url;
         public int replicaId;
-        public bool isDown;
+        public bool isDown {get; set; }
         public GrpcChannel channel;
         public GossipService.GossipServiceClient gossipClient;
         public UpdateIfValueIsService.UpdateIfValueIsServiceClient uiviClient;
@@ -876,9 +881,9 @@ namespace StorageNode
         }
     }
 
-    public struct ConsensusKeyLock
+    public class ConsensusKeyLock
     {
-        public bool locked;
+        public bool locked { get; set; }
         public Timer timer;
 
         public void SetLocked(bool value)

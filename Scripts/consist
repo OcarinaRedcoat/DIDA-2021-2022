@@ -9,7 +9,8 @@ wait 2000
 populate consistentData
 listGlobal
 client 13 waitBetweenReadsApp
-wait 250
+wait 2500
+
 client 13 manyWritesApp
 wait 1000
 listGlobal

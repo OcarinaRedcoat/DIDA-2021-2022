@@ -2,7 +2,7 @@
 using System.Threading;
 using DIDAWorker;
 
-namespace DIDAOperator {
+namespace AnotherNameSpace {
 
     public class WaitOperator : IDIDAOperator {
 
@@ -51,7 +51,7 @@ namespace DIDAOperator {
 
         void IDIDAOperator.ConfigureStorage(IDIDAStorage storageProxy) {
             _storageProxy = storageProxy;
-            }
         }
+    }
 
 }

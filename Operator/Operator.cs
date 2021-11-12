@@ -89,38 +89,3 @@ namespace DIDAOperator
         }
     }
 }
-
-/*
-public class IncrementOperator : IDIDAOperator
-{
-    IDIDAStorage _storageProxy;
-
-    public IncrementOperator()
-    {
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-    }
-
-    // this operator increments the storage record identified in the metadata record every time it is called.
-    string IDIDAOperator.ProcessRecord(DIDAMetaRecord meta, string input, string previousOperatorOutput)
-    {
-        Console.WriteLine("[ IncrementOperator ] : Input string was: " + input);
-        Console.Write("[ IncrementOperator ] : Reading data record: " + meta.Id + " with value: ");
-        var val = _storageProxy.read(new DIDAReadRequest { Id = meta.Id.ToString(), Version = new DIDAVersion { VersionNumber = -1, ReplicaId = -1 } });
-        string storedString = val.Val;
-        Console.WriteLine(storedString);
-        int requestCounter = Int32.Parse(storedString);
-
-        requestCounter++;
-        //requestCounter += Int32.Parse(previousOperatorOutput);
-
-        _storageProxy.write(new DIDAWriteRequest { Id = meta.Id.ToString(), Val = requestCounter.ToString() });
-        Console.WriteLine("[ IncrementOperator ] : Writing data record:" + meta.Id + " with new value: " + requestCounter.ToString());
-        return requestCounter.ToString();
-    }
-
-    void IDIDAOperator.ConfigureStorage(IDIDAStorage storageProxy)
-    {
-        _storageProxy = storageProxy;
-    }
-}
-*/
