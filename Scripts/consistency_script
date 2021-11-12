@@ -6,12 +6,11 @@ storage s3 http://localhost:3003 1000
 worker w1 http://localhost:4001 0
 worker w2 http://localhost:4002 0
 wait 2000
-populate consistentData
+populate data_consistency
 listGlobal
-client 13 waitBetweenReadsApp
+client 13 WaitBetweenIncrementsApp
 wait 2500
-
-client 13 manyWritesApp
+client 13 ManyWritesApp
 wait 1000
 listGlobal
 wait 5000

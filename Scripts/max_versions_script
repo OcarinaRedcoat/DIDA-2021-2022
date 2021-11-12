@@ -1,0 +1,17 @@
+debug
+scheduler sc1 http://localhost:2000
+storage s1 http://localhost:3001 1000
+storage s2 http://localhost:3002 1000
+storage s3 http://localhost:3003 1000
+worker w1 http://localhost:4001 0
+worker w2 http://localhost:4002 0
+wait 2000
+populate data_consistency
+listGlobal
+client 13 WaitBetweenIncrementsApp
+wait 2500
+client 13 MoreWritesThanMaxVersionsApp
+wait 1000
+listGlobal
+wait 5000
+listGlobal

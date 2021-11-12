@@ -5,6 +5,12 @@
 		eg of the content of pcs.txt "http://localhost:10000" or "http://192.168.1.92:10000"
 	- All the pcs have to be ran before the PuppetMaster
 
+## Smaple Known PCS's: (pcs.txt)
+
+```
+http://localhost:10000
+```
+
 ## Running the defaults files: (PuppetMasterCLI)
 ```
 y
@@ -12,48 +18,67 @@ sample_script
 exit
 ```
 
-
-### Client App: (app1)
-
-```
-operator CounterOperator 0
-operator CounterOperator 1
-operator CounterOperator 2
-operator CounterOperator 3
-operator CounterOperator 4
-operator CounterOperator 5
-```
-
-### Populate file: (data)
+### Sample Client App: (ManyUpdatesApp)
 
 ```
-app1_r1,the_data_of_request_1
-app1_r2,the_data_of_request_2
-app1_r3,the_data_of_request_3
-1,0
+operator UpdateAndChainOperator 0
+operator UpdateAndChainOperator 1
+operator UpdateAndChainOperator 2
+operator UpdateAndChainOperator 3
+operator UpdateAndChainOperator 4
+```
+
+### Sample Client App: (ManyWritesApp)
+
+```
+operator IncrementOperator 0
+operator IncrementOperator 1
+operator IncrementOperator 2
+operator IncrementOperator 3
+```
+
+### Sample Populate file: (data_load)
+
+```
+13,1
+14,one_ahead_of_13
+23,11
+24,one_ahead_of_23
 ```
 
 ### Sample Script: (sample_script)
 
 ```
 debug
-scheduler sc1 http://localhost:4000 0
-storage s1 http://localhost:3000 0
-storage s2 http://localhost:3003 0
-worker w1 http://localhost:3001 0
-worker w2 http://localhost:3002 0
-crash s2
-populate data
-listServer s1
-client 1 app1
-wait_interval 5000
-
-listGlobal
+scheduler sc1 http://localhost:5645
+storage s1 http://localhost:3000 2000
+storage s2 http://localhost:3001 2000
+storage s3 http://localhost:3002 2000
+worker w1 http://localhost:4001 0
+worker w2 http://localhost:4002 0
+wait 2000
 status
+listServer s1
+listGlobal
+populate data_load
+wait 1000
+client 23 ManyUpdatesApp
+wait 2000
+client 13 ManyWritesApp
+client 13 ManyUpdatesApp
+wait 2000
+status
+listServer s1
+listGlobal
 ```
 
-### Known PCS's: (pcs.txt)
-
+## Test Scripts:
+We prepared some test scripts:
 ```
-http://localhost:10000
+ - consistency_script
+ - failure_tolerance_script
+ - load_test_script
+ - max_versions_script 
+ - sample_script
+ - update_tiebreak_script
 ```

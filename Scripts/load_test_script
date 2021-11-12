@@ -5,9 +5,12 @@ storage s2 http://localhost:3001 2000
 storage s3 http://localhost:3002 2000
 worker w1 http://localhost:4001 0
 worker w2 http://localhost:4002 0
-populate app2_data
-client 13 app2
-client 13 app2
-client 13 app2
-client 13 app2
-client 13 app2
+populate data_load
+client 13 ManyUpdatesApp
+client 13 ManyUpdatesApp
+client 13 ManyUpdatesApp
+client 13 ManyUpdatesApp
+client 13 ManyUpdatesApp
+listGlobal
+wait 10000
+listGlobal

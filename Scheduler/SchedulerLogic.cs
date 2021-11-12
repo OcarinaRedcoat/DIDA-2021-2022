@@ -11,6 +11,7 @@ namespace Scheduler
         private Dictionary<string, WorkerNodeStruct> workerNodes = new Dictionary<string, WorkerNodeStruct>();
 
         private int IDcounter = 0;
+        private Random rng = new Random();
         public SchedulerLogic()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -53,15 +54,17 @@ namespace Scheduler
         {
             IList<DIDAAssignment> assignment = new List<DIDAAssignment>();
 
-            List<string> urls = new List<string>(workerNodes.Keys);
+            List<string> shuffledUrls = Shuffle(new List<string>(workerNodes.Keys));
+
+            Console.WriteLine("[ LOG ] : First assigned chain Worker: " + shuffledUrls[0]);
 
             for ((int i, int j) = (0,0); i < operators.Count; j = ++i % workerNodes.Count)
             {
                 assignment.Add(new DIDAAssignment
                 {
                     OperatorId = operators[i],
-                    Host = ExtractHostFromUrl(urls[j]),
-                    Port = ExtractPortFromUrl(urls[j]),
+                    Host = ExtractHostFromUrl(shuffledUrls[j]),
+                    Port = ExtractPortFromUrl(shuffledUrls[j]),
                     Output = ""
                 });
             }
@@ -96,6 +99,20 @@ namespace Scheduler
         public int ExtractPortFromUrl(string url)
         {
             return Int32.Parse(url.Split("//")[1].Split(":")[1]);
+        }
+
+        public List<string> Shuffle(List<string> list)
+        {
+            int n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rng.Next(n + 1);
+                string value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+            return list;
         }
 
     }

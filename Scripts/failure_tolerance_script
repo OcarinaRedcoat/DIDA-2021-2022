@@ -14,10 +14,10 @@ worker w1 http://localhost:4001 1000
 worker w2 http://localhost:4002 1000
 worker w3 http://localhost:4003 1000
 populate data_ft
-client X CounterX5App
+client X ManyWritesApp
 crash s0
 crash s1
-client Y CounterY10App
+client Y MoreWritesThanMaxVersionsApp
 wait 2000
 crash s3
 crash s8

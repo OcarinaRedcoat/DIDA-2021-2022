@@ -15,12 +15,12 @@ namespace StorageNode
     class StorageNodeLogic 
     {
         public static int MAX_VERSIONS_STORED = 5;
-        public static int CONSENSUS_TIMEOUT = 5000;
+        public static int LEASE_TIMEOUT = 5000;
 
         private Dictionary<string, StorageNodeStruct> storageNodes = new Dictionary<string, StorageNodeStruct>();
 
-        // if uivi cant write key during consensus
-        private Dictionary<string, ConsensusKeyLock> consensusLock = new Dictionary<string, ConsensusKeyLock>();
+        // if updates cant write key during lease time
+        private Dictionary<string, LeaseKeyLock> leaseLock = new Dictionary<string, LeaseKeyLock>();
 
         // Must be a queue instead of a list, in order to pop old values
         private Dictionary<string, List<DIDAStorage.DIDARecord>> storage = new Dictionary<string, List<DIDAStorage.DIDARecord>>();
@@ -219,7 +219,7 @@ namespace StorageNode
 
             lock (this)
             {
-                if (consensusLock[id].locked)
+                if (leaseLock[id].locked)
                 {
                     // Version (-2, -2) corresponds to alreadyLocked key
                     return new DIDAStorage.DIDAVersion
@@ -291,7 +291,7 @@ namespace StorageNode
                     this.AddNewKey(id);
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, id);
                 }
-                if (consensusLock[id].locked)
+                if (leaseLock[id].locked)
                 {
                     // Version (-2, -2) corresponds to alreadyLocked key
                     return new DIDAVersion
@@ -300,7 +300,7 @@ namespace StorageNode
                         VersionNumber = -2
                     };
                 }
-                consensusLock[id].SetLocked(true);
+                leaseLock[id].SetLocked(true);
             }
 
             Console.WriteLine("[ LOG ] : Updating If Value Is... ID: " + id + " OldValue: " + oldvalue + " NewValue: " + newvalue);
@@ -482,7 +482,7 @@ namespace StorageNode
                         versionNumber = -2
                     };
                 }
-                consensusLock[id].SetLocked(false);
+                leaseLock[id].SetLocked(false);
             }
 
             foreach (string sId in setOfReplicas)
@@ -527,11 +527,11 @@ namespace StorageNode
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, request.Key);
                 }
 
-                if (consensusLock[request.Key].locked)
+                if (leaseLock[request.Key].locked)
                 {
                     return new LockAndPullReply { AlreadyLocked = true };
                 }
-                consensusLock[request.Key].SetLocked(true);
+                leaseLock[request.Key].SetLocked(true);
 
                 if (this.storage[request.Key].Count > 0)
                 {
@@ -562,7 +562,7 @@ namespace StorageNode
                 }
             }
 
-            this.consensusLock[request.Key].timer.Start();
+            this.leaseLock[request.Key].timer.Start();
             return new LockAndPullReply { AlreadyLocked = false, Record = maxRecord };
         }
 
@@ -576,11 +576,11 @@ namespace StorageNode
                     this.replicaManager.CreateNewEmptyTimeStamp(this.replicaId, request.Record.Id);
                 }
 
-                this.consensusLock[request.Record.Id].timer.Stop();
+                this.leaseLock[request.Record.Id].timer.Stop();
 
                 if (!request.CanCommit)
                 {
-                    consensusLock[request.Record.Id].SetLocked(false);
+                    leaseLock[request.Record.Id].SetLocked(false);
                     return new CommitPhaseReply { Okay = true };
                 }
 
@@ -627,7 +627,7 @@ namespace StorageNode
                     this.storage[request.Record.Id].RemoveAt(0);
                 }
 
-                consensusLock[request.Record.Id].SetLocked(false);
+                leaseLock[request.Record.Id].SetLocked(false);
             }
 
             return new CommitPhaseReply { Okay = true };
@@ -724,8 +724,6 @@ namespace StorageNode
                     if (isDown) continue;
 
                     GossipRequest request = gossipRequests[requestServerId];
-
-                    Console.WriteLine("Updates Count : " + request.UpdateLogs + " To: " + requestServerId);
 
                     if (request.UpdateLogs.Count > 0)
                     {
@@ -839,30 +837,30 @@ namespace StorageNode
             return reply;
         }
 
-        public void FreeConsensusKey(string key)
+        public void FreeLeasedKey(string key)
         {
             Console.WriteLine("[ TIMEOUT ] - Free lock on key: " + key);
-            this.consensusLock[key].SetLocked(false);
+            this.leaseLock[key].SetLocked(false);
         }
 
         private void AddNewKey(string key)
         {
             this.storage.Add(key, new List<DIDAStorage.DIDARecord>());
-            this.consensusLock.Add(key, new ConsensusKeyLock
+            this.leaseLock.Add(key, new LeaseKeyLock
             { 
                 locked = false,
                 timer = new Timer
                 {
-                    Interval = CONSENSUS_TIMEOUT,
+                    Interval = LEASE_TIMEOUT,
                     AutoReset = false,
                     Enabled = false
                 }
             });
 
             ElapsedEventHandler handler = ((sender, args) => {
-                this.FreeConsensusKey(key);
+                this.FreeLeasedKey(key);
             });
-            this.consensusLock[key].timer.Elapsed += handler;
+            this.leaseLock[key].timer.Elapsed += handler;
         }
     }
     public class StorageNodeStruct
@@ -881,7 +879,7 @@ namespace StorageNode
         }
     }
 
-    public class ConsensusKeyLock
+    public class LeaseKeyLock
     {
         public bool locked { get; set; }
         public Timer timer;

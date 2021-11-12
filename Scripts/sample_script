@@ -1,9 +1,21 @@
 debug
-scheduler sc1 http://localhost:4000 0
+scheduler sc1 http://localhost:5645
 storage s1 http://localhost:3000 2000
 storage s2 http://localhost:3001 2000
 storage s3 http://localhost:3002 2000
 worker w1 http://localhost:4001 0
 worker w2 http://localhost:4002 0
-populate app2_data
-client 13 app3
+wait 2000
+status
+listServer s1
+listGlobal
+populate data_load
+wait 1000
+client 23 ManyUpdatesApp
+wait 2000
+client 13 ManyWritesApp
+client 13 ManyUpdatesApp
+wait 2000
+status
+listServer s1
+listGlobal
