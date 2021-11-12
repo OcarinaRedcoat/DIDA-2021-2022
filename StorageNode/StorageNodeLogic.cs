@@ -14,7 +14,7 @@ namespace StorageNode
 {
     class StorageNodeLogic 
     {
-        public static int MAX_VERSIONS_STORED = 5;
+        public static int MAX_VERSIONS_STORED = 2;
         public static int CONSENSUS_TIMEOUT = 5000;
 
         private Dictionary<string, StorageNodeStruct> storageNodes = new Dictionary<string, StorageNodeStruct>();
@@ -127,12 +127,36 @@ namespace StorageNode
             {
                 Console.WriteLine("[ STATUS ] : This is my Status: " + replicaId);
 
+                Console.WriteLine("[ STATUS ] : <STORAGE>");
                 foreach (KeyValuePair<string, List<DIDAStorage.DIDARecord>> pair in storage)
                 {
                     Console.WriteLine("[ STATUS ] : Key: " + pair.Key);
                     foreach (DIDAStorage.DIDARecord rec in pair.Value)
                     {
                         Console.WriteLine("[ STATUS ] : Value: " + rec.val + ", Version: (" + rec.version.versionNumber + ", " + rec.version.replicaId + ")");
+                    }
+                }
+                Console.WriteLine("[ STATUS ] : <TIMESTAMP>");
+                foreach (KeyValuePair<string, List<DIDAStorage.DIDAVersion>> pair in replicaManager.GetReplicaTimeStamp(this.replicaId))
+                {
+                    Console.WriteLine("[ STATUS ] : Key: " + pair.Key);
+                    foreach (DIDAStorage.DIDAVersion version in pair.Value)
+                    {
+                        Console.WriteLine("[ STATUS ] : Version: (" + version.versionNumber + ", " + version.replicaId + ")");
+                    }
+                }
+
+                foreach (StorageNodeStruct sns in storageNodes.Values)
+                {
+                    if (sns.serverId == this.serverId) continue;
+                    Console.WriteLine("[ STATUS ] : <OTHER TIMESTAMP> -> ID: " + sns.serverId);
+                    foreach (KeyValuePair<string, List<DIDAStorage.DIDAVersion>> pair in replicaManager.GetReplicaTimeStamp(sns.replicaId))
+                    {
+                        Console.WriteLine("[ STATUS ] : Key: " + pair.Key);
+                        foreach (DIDAStorage.DIDAVersion version in pair.Value)
+                        {
+                            Console.WriteLine("[ STATUS ] : Version: (" + version.versionNumber + ", " + version.replicaId + ")");
+                        }
                     }
                 }
             }
@@ -232,14 +256,12 @@ namespace StorageNode
 
                 if (storage.ContainsKey(id))
                 {
-                    List<DIDAStorage.DIDARecord> items = storage[id];
-
                     // If Queue is full
-                    if (items.Count == MAX_VERSIONS_STORED)
+                    if (storage[id].Count == MAX_VERSIONS_STORED)
                     {
-                        items.RemoveAt(0);
+                        storage[id].RemoveAt(0);
                     }
-                    items.Add(didaRecord);
+                    storage[id].Add(didaRecord);
                     this.replicaManager.AddTimeStamp(this.replicaId, id, didaVersion);
                 }
                 else
@@ -327,7 +349,7 @@ namespace StorageNode
                 {
                     replies.Add(await call.ResponseAsync);
                 }
-                catch (RpcException e)
+                catch (RpcException)
                 {
                     replicaTimeout = true;
                 }
@@ -610,11 +632,12 @@ namespace StorageNode
 
         public void Gossip()
         {
+            Dictionary<string, GossipRequest> gossipRequests = new Dictionary<string, GossipRequest>();
+
             lock (this)
             {
                 List<string> keys = this.replicaManager.GetMyKeys();
                 Dictionary<string, List<DIDAStorage.DIDAVersion>> myReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(this.replicaId);
-                Dictionary<string, GossipRequest> gossipRequests = new Dictionary<string, GossipRequest>();
 
                 List<string> storageIds = new List<string>();
                 foreach (StorageNodeStruct sns in storageNodes.Values)
@@ -622,10 +645,10 @@ namespace StorageNode
                     storageIds.Add(sns.serverId);
                 }
                 storageIds.Add(this.serverId);
+                ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
 
                 foreach (string key in keys)
                 {
-                    ConsistentHashing consistentHashing = new ConsistentHashing(storageIds);
                     List<string> setOfReplicas = consistentHashing.ComputeSetOfReplicas(key);
 
                     foreach (string sId in setOfReplicas)
@@ -639,6 +662,7 @@ namespace StorageNode
                         }
                         StorageNodeStruct sns = this.storageNodes[sId];
                         Dictionary<string, List<DIDAStorage.DIDAVersion>> snsReplicaTimestamp = this.replicaManager.GetReplicaTimeStamp(sns.replicaId);
+
                         if (!snsReplicaTimestamp.ContainsKey(key))
                         {
                             snsReplicaTimestamp.Add(key, new List<DIDAStorage.DIDAVersion>());
@@ -679,31 +703,47 @@ namespace StorageNode
                         gossipRequests[sId].ReplicaTimestamp.Add(grpcTimestamp);
                     }
                 }
+            }
 
-                foreach (string requestServerId in gossipRequests.Keys)
+            foreach (string requestServerId in gossipRequests.Keys)
+            {
+                try
                 {
-                    try
-                    {
-                        if (this.storageNodes[requestServerId].isDown) continue;
+                    bool isDown;
+                    GossipService.GossipServiceClient gossipClient;
 
-                        GossipRequest request = gossipRequests[requestServerId];
-                        if (request.UpdateLogs.Count > 0)
+                    lock (this)
+                    {
+                        isDown = this.storageNodes[requestServerId].isDown;
+                        gossipClient = this.storageNodes[requestServerId].gossipClient;
+                    }
+
+                    if (isDown) continue;
+
+                    GossipRequest request = gossipRequests[requestServerId];
+
+                    if (request.UpdateLogs.Count > 0)
+                    {
+                        Console.WriteLine("[ REQUEST ] Request from ServerId: " + requestServerId);
+                        GossipReply reply = gossipClient.Gossip(request);
+                        lock (this)
                         {
-                            Console.WriteLine("[ REQUEST ] Request from ServerId: " + requestServerId);
-                            GossipReply reply = this.storageNodes[requestServerId].gossipClient.Gossip(request);
                             this.replicaManager.ReplaceTimeStamp(this.storageNodes[requestServerId].replicaId, reply.ReplicaTimestamp);
                         }
                     }
-                    catch (RpcException e)
+                }
+                catch (RpcException e)
+                {
+                    if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
                     {
-                        if (e.StatusCode == StatusCode.Unavailable || e.StatusCode == StatusCode.Internal)
+                        lock (this)
                         {
                             this.storageNodes[requestServerId].SetDown();
                         }
-                        else
-                        {
-                            Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
-                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[ ERROR ] : GRPC Exception with Status Code: " + e.StatusCode);
                     }
                 }
             }
