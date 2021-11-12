@@ -1,7 +1,7 @@
 ﻿using System;
 using DIDAWorker;
 
-namespace DIDAOperator
+namespace SimpleOperators
 {
 
     public class SimpleOperator : IDIDAOperator

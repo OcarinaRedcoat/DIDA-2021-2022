@@ -1,4 +1,8 @@
-# How to run the project:
+## DAD 20/21
+
+Group 06 (87704, 87699, 89559)
+
+## How to run the project:
 
 	- Every file in relation to the puppet master (script, populate data, and clients files) have to be in the folder "Scripts"
 	- Also we assume that the PuppetMaster knows the IP and Port of all the known PCS's so the url of those pcs have to be placed in the file "pcs.txt" which in the folder "Scripts" 

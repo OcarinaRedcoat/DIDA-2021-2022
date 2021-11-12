@@ -13,8 +13,7 @@ populate data_load
 wait 1000
 client 23 ManyUpdatesApp
 wait 2000
-client 13 ManyWritesApp
-client 13 ManyUpdatesApp
+client 13 ManyIncrementsApp
 wait 2000
 status
 listServer s1

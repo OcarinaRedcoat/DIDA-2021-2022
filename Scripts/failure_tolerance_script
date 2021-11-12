@@ -14,7 +14,7 @@ worker w1 http://localhost:4001 1000
 worker w2 http://localhost:4002 1000
 worker w3 http://localhost:4003 1000
 populate data_ft
-client X ManyWritesApp
+client X ManyIncrementsApp
 crash s0
 crash s1
 client Y MoreWritesThanMaxVersionsApp

@@ -10,7 +10,7 @@ populate data_consistency
 listGlobal
 client 13 WaitBetweenIncrementsApp
 wait 2500
-client 13 ManyWritesApp
+client 13 ManyIncrementsApp
 wait 1000
 listGlobal
 wait 5000
